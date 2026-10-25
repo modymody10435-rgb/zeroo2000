@@ -625,7 +625,7 @@
 
 .marks-area {
     position: relative;
-    flex: 0 0 25.5rem;
+    flex: 0 0 30rem;
     min-height: 9.5rem;
 }
 
@@ -646,6 +646,17 @@
 
 .mark-stamp {
     --mark-x: 15.5rem;
+    width: 220px;
+}
+
+.mark-stamp .mark-body {
+    width: 220px;
+    height: 8rem;
+}
+
+.mark-stamp .mark-body img {
+    width: 220px;
+    max-width: 100%;
 }
 
 .mark-signature[data-position="center"] {
@@ -666,6 +677,11 @@
 .mark[data-position="right"] {
     right: var(--mark-x);
     left: auto;
+}
+
+.mark-stamp[data-position="center"] {
+    left: calc(50% - 110px);
+    margin-left: 0;
 }
 
 .mark[hidden] {
@@ -1058,8 +1074,8 @@
     }
 
     .mark-stamp .mark-body {
-        width: 11rem;
-        height: 6.6rem;
+        width: 220px;
+        height: 8rem;
     }
 
     .mark-body img.is-visible {

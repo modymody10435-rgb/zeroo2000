@@ -177,7 +177,7 @@
                             </div>
                             <div class="mark mark-stamp" id="stamp-mark" data-position="{{ form.stamp_position if form else 'left' }}" {% if form and not form.show_stamp %}hidden{% endif %}>
                                 <span class="mark-body">
-                                    <img id="stamp-image" alt="الختم الرسمي" {% if stamp_src %}src="{{ stamp_src }}" class="is-visible"{% endif %}>
+                                    <img id="stamp-image" width="220" alt="الختم الرسمي" class="mark-stamp-img{% if stamp_src %} is-visible{% endif %}" {% if stamp_src %}src="{{ stamp_src }}"{% endif %}>
                                     <span class="mark-placeholder" id="stamp-placeholder" {% if stamp_src %}hidden{% endif %}>الختم الرسمي</span>
                                 </span>
                             </div>
