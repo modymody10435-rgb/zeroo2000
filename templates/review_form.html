@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | مراجعة الاستمارة</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reviews.css') }}">
+</head>
+<body class="users-page reviews-page">
+    {% set active_nav = 'reviews' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>مراجعة الاستمارات</span>
+                    <h2>مراجعة الاستمارة #{{ form.id }}</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مستخدم النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">المراجعة</span>
+                            <h2>بيانات المراجعات</h2>
+                            <p>سجّل المراجعة الأولى والثانية لكل استمارة. يمكنك ترك المرحلة الثانية فارغة حتى تبدأ.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <a class="button button-secondary" href="{{ url_for('main.reviews_page') }}">
+                                <svg class="icon"><use href="#icon-check"></use></svg>
+                                <span>سجل المراجعات</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="reviews-context">
+                        <div class="reviews-context-item">
+                            <span>رقم الاستمارة</span>
+                            <strong dir="ltr">#{{ form.id }}</strong>
+                        </div>
+                        <div class="reviews-context-item">
+                            <span>الرقم المعملي</span>
+                            <strong dir="auto">{{ form.lab_number or '—' }}</strong>
+                        </div>
+                        <div class="reviews-context-item">
+                            <span>اسم المريض</span>
+                            <strong dir="auto">{{ form.patient_name or '—' }}</strong>
+                        </div>
+                        <div class="reviews-context-item">
+                            <span>المحافظة</span>
+                            <strong>{{ form.governorate or '—' }}</strong>
+                        </div>
+                        <a class="button button-secondary button-compact reviews-context-link" href="{{ url_for('main.edit_form_page', form_id=form.id) }}">
+                            <svg class="icon"><use href="#icon-file"></use></svg>
+                            <span>فتح الاستمارة</span>
+                        </a>
+                    </div>
+
+                    <div class="users-layout">
+                        <form class="users-form" method="post" action="{{ url_for('main.review_form_page', form_id=form.id) }}" novalidate>
+                            {% if errors %}
+                            <div class="form-alert" role="alert">
+                                <svg class="icon"><use href="#icon-alert"></use></svg>
+                                <span>{{ errors.review or 'يرجى تصحيح الحقول المحددة أدناه.' }}</span>
+                            </div>
+                            {% endif %}
+
+                            <section class="review-stage-form" aria-labelledby="first-review-heading">
+                                <div class="review-stage-heading">
+                                    <div>
+                                        <span class="section-kicker">المرحلة الأولى</span>
+                                        <h3 id="first-review-heading">المراجعة الأولى</h3>
+                                    </div>
+                                    {% if review and review.first_reviewed_at %}
+                                    <span class="review-status is-reviewed">تمت المراجعة</span>
+                                    {% else %}
+                                    <span class="review-status">بانتظار المراجعة</span>
+                                    {% endif %}
+                                </div>
+                                <div class="form-grid users-form-grid">
+                                    <div class="form-field span-two{{ ' has-error' if errors.first_reviewer_name }}">
+                                        <label for="first_reviewer_name">اسم المراجع <span class="required">*</span></label>
+                                        <input
+                                            id="first_reviewer_name"
+                                            name="first_reviewer_name"
+                                            type="text"
+                                            value="{{ values.first_reviewer_name }}"
+                                            placeholder="مثال: د. سارة محمود"
+                                            maxlength="120"
+                                            autocomplete="off"
+                                            {% if errors.first_reviewer_name %}aria-invalid="true" aria-describedby="first-reviewer-name-error"{% endif %}
+                                        >
+                                        <span class="field-error" id="first-reviewer-name-error" aria-live="polite">{{ errors.first_reviewer_name or '' }}</span>
+                                    </div>
+
+                                    <div class="form-field span-two{{ ' has-error' if errors.first_reviewed_at }}">
+                                        <label for="first_reviewed_at">تاريخ ووقت المراجعة <span class="required">*</span></label>
+                                        <input
+                                            id="first_reviewed_at"
+                                            name="first_reviewed_at"
+                                            type="datetime-local"
+                                            value="{{ values.first_reviewed_at }}"
+                                            step="60"
+                                            {% if errors.first_reviewed_at %}aria-invalid="true" aria-describedby="first-reviewed-at-error"{% endif %}
+                                        >
+                                        <span class="field-error" id="first-reviewed-at-error" aria-live="polite">{{ errors.first_reviewed_at or '' }}</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="review-stage-form" aria-labelledby="second-review-heading">
+                                <div class="review-stage-heading">
+                                    <div>
+                                        <span class="section-kicker">المرحلة الثانية</span>
+                                        <h3 id="second-review-heading">المراجعة الثانية</h3>
+                                    </div>
+                                    {% if review and review.second_reviewed_at %}
+                                    <span class="review-status is-reviewed">تمت المراجعة</span>
+                                    {% elif review and review.first_reviewed_at %}
+                                    <span class="review-status">بانتظار المراجعة</span>
+                                    {% else %}
+                                    <span class="review-status is-empty">لم تبدأ</span>
+                                    {% endif %}
+                                </div>
+                                <div class="form-grid users-form-grid">
+                                    <div class="form-field span-two{{ ' has-error' if errors.second_reviewer_name }}">
+                                        <label for="second_reviewer_name">اسم المراجع</label>
+                                        <input
+                                            id="second_reviewer_name"
+                                            name="second_reviewer_name"
+                                            type="text"
+                                            value="{{ values.second_reviewer_name }}"
+                                            placeholder="مثال: د. محمد علي"
+                                            maxlength="120"
+                                            autocomplete="off"
+                                            {% if errors.second_reviewer_name %}aria-invalid="true" aria-describedby="second-reviewer-name-error"{% endif %}
+                                        >
+                                        <span class="field-error" id="second-reviewer-name-error" aria-live="polite">{{ errors.second_reviewer_name or '' }}</span>
+                                    </div>
+
+                                    <div class="form-field span-two{{ ' has-error' if errors.second_reviewed_at }}">
+                                        <label for="second_reviewed_at">تاريخ ووقت المراجعة</label>
+                                        <input
+                                            id="second_reviewed_at"
+                                            name="second_reviewed_at"
+                                            type="datetime-local"
+                                            value="{{ values.second_reviewed_at }}"
+                                            step="60"
+                                            {% if errors.second_reviewed_at %}aria-invalid="true" aria-describedby="second-reviewed-at-error"{% endif %}
+                                        >
+                                        <span class="field-error" id="second-reviewed-at-error" aria-live="polite">{{ errors.second_reviewed_at or '' }}</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {% if review and review.pdf_path %}
+                            <div class="reviews-existing-pdf">
+                                <span>ملف المراجعة المجمع</span>
+                                <a class="review-pdf-link" href="{{ url_for('main.review_pdf', filename=review.pdf_path) }}" target="_blank" rel="noopener">
+                                    <svg class="icon"><use href="#icon-file"></use></svg>
+                                    <span>عرض ملف PDF</span>
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            <div class="users-form-actions">
+                                <button class="button button-primary" type="submit">
+                                    <svg class="icon"><use href="#icon-check"></use></svg>
+                                    <span>{{ 'حفظ تعديل المراجعات' if review else 'حفظ المراجعات' }}</span>
+                                </button>
+                                <a class="button button-secondary" href="{{ url_for('main.reviews_page') }}">
+                                    <span>إلغاء</span>
+                                </a>
+                            </div>
+                        </form>
+
+                        <aside class="users-guide" aria-label="تنظيم مجلدات المراجعة">
+                            <span class="users-guide-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                            <h3>تنظيم تلقائي</h3>
+                            <p>عند حفظ المراجعة يُنشئ النظام مجلداً خاصاً بالاستمارة داخل مجلد تاريخ أول مراجعة.</p>
+                            <ul>
+                                <li><svg class="icon"><use href="#icon-calendar"></use></svg><span>مجلد التاريخ بصيغة <bdi dir="ltr">YYYY-MM-DD</bdi>.</span></li>
+                                <li><svg class="icon"><use href="#icon-file"></use></svg><span>مجلد الاستمارة باسم <bdi dir="ltr">form-{{ form.id }}</bdi> مرتبط بالمعرف.</span></li>
+                                <li><svg class="icon"><use href="#icon-save"></use></svg><span>ملف <bdi dir="ltr">review.json</bdi> يحتوي بيانات المراجعتين وملف PDF.</span></li>
+                            </ul>
+                            {% if review and review.folder_path %}
+                            <div class="reviews-existing-folder">
+                                <span>مجلد المراجعة الحالي</span>
+                                <code dir="ltr">{{ review.folder_path }}</code>
+                            </div>
+                            {% endif %}
+                        </aside>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>المصدر: WHO / VACSERA</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+</body>
+</html>

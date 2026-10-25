@@ -1,0 +1,1077 @@
+/* ============================================================
+   Polio Lab — WHO / VACSERA lab form (L20B)
+   ============================================================ */
+
+/* ---------- editor chrome ---------- */
+
+.lab-form-body .page-content,
+.forms-page .page-content {
+    padding-bottom: 44px;
+}
+
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.toolbar-start {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.toolbar-title {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.toolbar-title strong {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.toolbar-title small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.toolbar-end {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.form-alert {
+    align-items: flex-start;
+}
+
+.form-alert-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.form-alert-copy strong {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.form-alert-copy p {
+    margin: 2px 0 0;
+    font-size: 9px;
+    line-height: 1.6;
+}
+
+.form-alert-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.form-alert-close:hover {
+    background: rgba(217, 85, 85, 0.12);
+}
+
+.form-alert-close .icon {
+    width: 13px;
+    height: 13px;
+}
+
+/* ---------- print settings panel ---------- */
+
+.settings-panel {
+    margin-bottom: 18px;
+}
+
+.settings-hint {
+    color: var(--green);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 0 22px 22px;
+}
+
+.setting-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+}
+
+.setting-label {
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.setting-file {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.upload-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px dashed rgba(13, 125, 117, 0.35);
+    border-radius: 9px;
+    background: rgba(13, 125, 117, 0.05);
+    color: var(--teal);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.upload-button:hover {
+    border-color: rgba(13, 125, 117, 0.55);
+    background: rgba(13, 125, 117, 0.1);
+}
+
+.upload-button .icon {
+    width: 14px;
+    height: 14px;
+}
+
+.setting-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid rgba(217, 85, 85, 0.25);
+    border-radius: 9px;
+    background: rgba(217, 85, 85, 0.05);
+    color: var(--red);
+    font-size: 9px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.setting-clear .icon {
+    width: 12px;
+    height: 12px;
+}
+
+.setting-options {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-soft);
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.switch input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+.switch-track {
+    position: relative;
+    width: 34px;
+    height: 18px;
+    border-radius: 20px;
+    background: #d7e4e1;
+    transition: background 0.2s ease;
+}
+
+.switch-track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(17, 47, 56, 0.25);
+    transition: transform 0.2s ease;
+}
+
+.switch input:checked + .switch-track {
+    background: var(--teal);
+}
+
+.switch input:checked + .switch-track::after {
+    transform: translateX(-16px);
+}
+
+.select-field.compact,
+.select-prefix-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.select-prefix {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.select-prefix-field select,
+.setting-options .select-field select {
+    height: 32px;
+    min-width: 92px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #ffffff;
+    color: var(--ink);
+    font-size: 10px;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.setting-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.setting-notes textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #ffffff;
+    color: var(--ink);
+    font-size: 10px;
+    padding: 8px 10px;
+    resize: vertical;
+}
+
+.setting-notes textarea:focus {
+    border-color: rgba(13, 125, 117, 0.4);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13, 125, 117, 0.07);
+}
+
+/* ---------- the paper sheet ---------- */
+
+.sheet-scroll {
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.form-sheet {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 880px;
+    max-width: 1140px;
+    margin: 0 auto 30px;
+    padding: 13mm 11mm 9mm;
+    border: 1px solid rgba(17, 47, 56, 0.12);
+    border-radius: 3px;
+    background: #ffffff;
+    box-shadow: var(--shadow-md);
+    color: #111111;
+    font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0 !important;
+}
+
+.form-sheet * {
+    letter-spacing: 0 !important;
+    font-kerning: normal;
+}
+
+.sheet-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 13px;
+}
+
+.sheet-org {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    text-align: center;
+}
+
+.sheet-org p {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.sheet-org .org-emphasis {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+
+.sheet-org .org-strong {
+    font-weight: 700;
+}
+
+.logo-slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 3px;
+    min-height: 0;
+}
+
+.sheet-logo {
+    display: block;
+    width: auto;
+    height: auto;
+    max-height: 54px;
+    max-width: 40vw;
+    object-fit: contain;
+}
+
+/* ---------- paper tables ---------- */
+
+.paper-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.paper-grid th,
+.paper-grid td {
+    border: 1px solid #111111;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.main-grid {
+    margin-bottom: 11px;
+}
+
+.main-grid thead th {
+    height: 32px;
+    padding: 7px 8px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    font-weight: 700;
+}
+
+.main-grid .value-row td {
+    height: 58px;
+    padding: 6px 5px;
+}
+
+.col-national { width: 13%; }
+.col-lab { width: 10%; }
+.col-name { width: 21%; }
+.col-age { width: 10%; }
+.col-date { width: 11%; }
+.col-center { width: 11%; }
+.col-gov { width: 12%; }
+.col-condition { width: 12%; }
+
+.form-sheet input:not([type="file"]),
+.form-sheet select,
+.form-sheet textarea {
+    width: 100%;
+    min-width: 0;
+    border: 1px dashed rgba(17, 47, 56, 0.16);
+    border-radius: 3px;
+    background: rgba(248, 251, 250, 0.65);
+    color: #111111;
+    font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0 !important;
+    word-spacing: normal;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-sheet input:hover,
+.form-sheet select:hover {
+    border-color: rgba(13, 125, 117, 0.35);
+    background: #ffffff;
+}
+
+.form-sheet input:focus,
+.form-sheet select:focus {
+    border-style: solid;
+    border-color: var(--teal);
+    background: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13, 125, 117, 0.08);
+}
+
+.form-sheet [aria-invalid="true"] {
+    border-color: rgba(217, 85, 85, 0.6);
+    background: rgba(217, 85, 85, 0.05);
+}
+
+.form-sheet select {
+    cursor: pointer;
+    height: 34px;
+    line-height: 1.4;
+    text-align: center;
+    text-align-last: center;
+    padding-block: 3px;
+    padding-inline: 8px 20px;
+}
+
+.age-cell {
+    padding: 0;
+}
+
+.age-table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.age-table td {
+    border: 0;
+    padding: 5px 3px;
+}
+
+.age-table td + td {
+    border-inline-start: 1px solid #111111;
+}
+
+.form-sheet .age-table input {
+    padding: 4px 4px;
+    text-align: center;
+}
+
+.age-part {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+}
+
+.age-label {
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: #000000;
+    white-space: nowrap;
+}
+
+.date-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+}
+
+.form-sheet .date-field .date-part,
+.form-sheet .date-field .date-part:hover,
+.form-sheet .date-field .date-part:focus {
+    flex: 0 0 auto;
+    width: 1.55em;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    text-align: center;
+}
+
+.form-sheet .date-field .date-part[name$="_year"] {
+    width: 2.55em;
+}
+
+.date-field .date-sep {
+    flex: 0 0 auto;
+    padding: 0;
+    color: #111111;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.condition-fixed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+/* ---------- results block (borderless) ---------- */
+
+.samples-grid .col-label {
+    width: 28%;
+}
+
+.samples-grid .col-sample {
+    width: 36%;
+}
+
+.samples-grid th,
+.samples-grid td {
+    border: 0;
+}
+
+.samples-grid .samples-corner {
+    border: 0;
+}
+
+.samples-grid .samples-head {
+    padding: 10px 8px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+}
+
+.samples-grid tbody tr {
+    height: 34px;
+}
+
+.samples-grid .row-label {
+    padding: 5px 8px;
+    text-align: start;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.samples-grid td {
+    padding: 4px 10px;
+}
+
+/* ---------- footer / signature marks ---------- */
+
+.sheet-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.footer-org {
+    flex: 0 0 auto;
+    width: 100%;
+    margin-bottom: 3px;
+    direction: rtl;
+    text-align: center;
+}
+
+.footer-org p {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.55;
+    white-space: nowrap;
+}
+
+.marks-area {
+    position: relative;
+    flex: 0 0 25.5rem;
+    min-height: 9.5rem;
+}
+
+.mark {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 9rem;
+}
+
+.mark-signature {
+    --mark-x: 0rem;
+    width: 14.5rem;
+}
+
+.mark-stamp {
+    --mark-x: 15.5rem;
+}
+
+.mark-signature[data-position="center"] {
+    left: calc(50% - 7.25rem);
+}
+
+.mark[data-position="left"] {
+    left: var(--mark-x);
+    right: auto;
+}
+
+.mark[data-position="center"] {
+    left: calc(50% - 4.5rem);
+    right: auto;
+    margin-left: var(--mark-x);
+}
+
+.mark[data-position="right"] {
+    right: var(--mark-x);
+    left: auto;
+}
+
+.mark[hidden] {
+    display: none;
+}
+
+.signatory-input {
+    text-align: center;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.mark-body {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 5.4rem;
+}
+
+.mark-signature .mark-body {
+    height: 4.2rem;
+}
+
+.mark-body img {
+    display: none;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.mark-body img.is-visible {
+    display: block;
+}
+
+.mark-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(17, 47, 56, 0.18);
+    border-radius: 4px;
+    color: #9aadaf;
+    font-size: 9px;
+}
+
+.mark-placeholder[hidden] {
+    display: none;
+}
+
+/* ---------- list helpers ---------- */
+
+.cell-strong {
+    font-weight: 700;
+}
+
+.cell-mono {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0 !important;
+}
+
+.creator-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(13, 125, 117, 0.07);
+    color: var(--ink-soft);
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.creator-chip .icon {
+    width: 12px;
+    height: 12px;
+    color: var(--teal);
+}
+
+.creator-chip.is-unknown {
+    background: rgba(107, 133, 139, 0.08);
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.lab-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.lab-badge::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.lab-badge.is-negative {
+    background: rgba(29, 154, 99, 0.1);
+    color: var(--green);
+}
+
+.lab-badge.is-positive {
+    background: rgba(217, 85, 85, 0.11);
+    color: var(--red);
+}
+
+.lab-badge.is-progress {
+    background: rgba(227, 161, 51, 0.14);
+    color: #b57b16;
+}
+
+.lab-badge.is-muted {
+    background: rgba(107, 133, 139, 0.12);
+    color: var(--muted);
+}
+
+.forms-page .stats-grid {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.forms-page .empty-state[hidden],
+.lab-form-body .empty-state[hidden] {
+    display: none;
+}
+
+/* ---------- bulk selection / batch export ---------- */
+
+.select-col {
+    width: 34px;
+    text-align: center;
+}
+
+.select-col input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--teal);
+    cursor: pointer;
+}
+
+.bulk-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    border: 1px solid rgba(13, 125, 117, 0.18);
+    border-radius: 10px;
+    background: rgba(13, 125, 117, 0.06);
+}
+
+.bulk-bar[hidden] {
+    display: none;
+}
+
+.bulk-count {
+    font-weight: 700;
+    color: var(--teal-dark);
+}
+
+.bulk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.batch-print {
+    background: #eef3f2;
+}
+
+.batch-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 16px;
+}
+
+.batch-sheets {
+    padding-bottom: 30px;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 900px) {
+    .settings-grid {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 0 16px 18px;
+    }
+
+    .sheet-header {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .toolbar-end {
+        width: 100%;
+    }
+
+    .toolbar-end .button {
+        flex: 1 1 auto;
+    }
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+
+@page {
+    size: A4 landscape;
+    margin: 8mm;
+}
+
+@media print {
+    html,
+    body {
+        background: #ffffff !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .batch-print,
+    .batch-sheets,
+    .batch-toolbar {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        letter-spacing: 0 !important;
+    }
+
+    .no-print,
+    .sidebar,
+    .sidebar-scrim,
+    .topbar,
+    .app-footer,
+    .editor-toolbar,
+    .settings-panel,
+    .form-alert,
+    .toast-region {
+        display: none !important;
+    }
+
+    .app-shell,
+    .app-main {
+        display: block !important;
+        min-height: 0 !important;
+    }
+
+    .page-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .sheet-scroll {
+        overflow: visible !important;
+        padding: 0 !important;
+    }
+
+    .form-sheet {
+        display: flex !important;
+        flex-direction: column;
+        min-width: 0 !important;
+        min-height: 189mm !important;
+        max-width: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif !important;
+        font-size: 11px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .sheet-header {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+        gap: 16px !important;
+    }
+
+    .sheet-org {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+
+    .sheet-footer {
+        margin-top: auto !important;
+    }
+
+    .form-sheet + .form-sheet {
+        break-before: page;
+        page-break-before: always;
+    }
+
+    .form-sheet input,
+    .form-sheet select,
+    .form-sheet textarea {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+        padding: 2px 4px !important;
+        margin: 0 !important;
+        font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif !important;
+        font-size: 11.5px !important;
+        font-weight: 700 !important;
+        line-height: 1.45 !important;
+        letter-spacing: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        text-align: center;
+    }
+
+    .form-sheet input::placeholder,
+    .form-sheet textarea::placeholder {
+        color: transparent !important;
+    }
+
+    .date-field .date-part {
+        padding: 0 !important;
+    }
+
+    .form-sheet select {
+        text-align: center;
+        text-align-last: center;
+        padding-inline: 0 !important;
+    }
+
+    .form-sheet select option {
+        color: #000000;
+    }
+
+    .paper-grid th,
+    .paper-grid td {
+        border-color: #008ECE !important;
+        border-width: 2px !important;
+        font-weight: 700 !important;
+    }
+
+    .main-grid .value-row td {
+        padding: 3px 5px;
+    }
+
+    .samples-grid tbody tr {
+        height: 44px;
+    }
+
+    .samples-grid .samples-head {
+        padding: 10px 8px 7px;
+    }
+
+    .age-table td + td {
+        border-inline-start: 2px solid #008ECE !important;
+    }
+
+    .mark-placeholder {
+        display: none !important;
+    }
+
+    .mark-stamp .mark-body {
+        width: 11rem;
+        height: 6.6rem;
+    }
+
+    .mark-body img.is-visible {
+        display: block !important;
+    }
+
+    .sheet-header,
+    .main-grid,
+    .samples-grid,
+    .sheet-footer,
+    .marks-area {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}

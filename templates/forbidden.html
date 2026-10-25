@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | صلاحية غير كافية</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+</head>
+<body class="users-page">
+    {% set active_nav = '' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>صلاحية غير كافية</span>
+                    <h2>الوصول مرفوض</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مستخدم النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="users-forbidden">
+                        <span class="users-forbidden-icon"><svg class="icon"><use href="#icon-shield"></use></svg></span>
+                        <span class="section-kicker">إدارة المستخدمين</span>
+                        <h2>هذه الصفحة متاحة للمديرين فقط</h2>
+                        <p>حسابك الحالي لا يملك دور «مدير»، لذلك لا يمكنه عرض أو إدارة حسابات المستخدمين. يمكنك متابعة العمل على الاستمارات المعملية.</p>
+                        <a class="button button-primary" href="{{ url_for('main.forms_page') }}">
+                            <svg class="icon"><use href="#icon-arrow-right"></use></svg>
+                            <span>العودة إلى الاستمارات</span>
+                        </a>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>المصدر: WHO / VACSERA</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+</body>
+</html>

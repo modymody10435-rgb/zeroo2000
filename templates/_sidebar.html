@@ -1,0 +1,58 @@
+<aside class="sidebar" id="sidebar">
+    <a class="brand" href="{{ url_for('main.index') }}" aria-label="المعامل المرجعية الرئيسية">
+        <span class="brand-mark"><svg class="icon"><use href="#icon-shield"></use></svg></span>
+        <span class="brand-copy">
+            <strong>المعامل المرجعية</strong>
+            <small>الاستمارات</small>
+        </span>
+    </a>
+
+    <nav class="sidebar-nav" aria-label="التنقل الرئيسي">
+        <span class="nav-label">المعمل المرجعي</span>
+        <a class="nav-item{{ ' active' if active_nav == 'lab-forms' }}" href="{{ url_for('main.forms_page') }}">
+            <svg class="icon"><use href="#icon-file"></use></svg>
+            <span>الاستمارات المعملية</span>
+        </a>
+        <a class="nav-item{{ ' active' if active_nav == 'new-form' }}" href="{{ url_for('main.new_form_page') }}">
+            <svg class="icon"><use href="#icon-plus"></use></svg>
+            <span>استمارة جديدة</span>
+        </a>
+        <a class="nav-item{{ ' active' if active_nav == 'reviews' }}" href="{{ url_for('main.reviews_page') }}">
+            <svg class="icon"><use href="#icon-check"></use></svg>
+            <span>مراجعة الاستمارات</span>
+        </a>
+        {% if current_user_role == 'admin' %}
+        <span class="nav-label">التسليم</span>
+        <a class="nav-item{{ ' active' if active_nav == 'deliveries' }}" href="{{ url_for('main.ebi_deliveries_page') }}">
+            <svg class="icon"><use href="#icon-upload"></use></svg>
+            <span>تسليم إلى EBI</span>
+        </a>
+        <span class="nav-label">الإدارة</span>
+        <a class="nav-item{{ ' active' if active_nav == 'users' }}" href="{{ url_for('main.users_page') }}">
+            <svg class="icon"><use href="#icon-users"></use></svg>
+            <span>إدارة المستخدمين</span>
+        </a>
+        <a class="nav-item{{ ' active' if active_nav == 'new-user' }}" href="{{ url_for('main.new_user_page') }}">
+            <svg class="icon"><use href="#icon-user-plus"></use></svg>
+            <span>إضافة مستخدم</span>
+        </a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-campaign sidebar-campaign--lab">
+        <span class="campaign-pulse"></span>
+        <span class="campaign-kicker">المعمل المرجعي</span>
+        <strong>استمارات L20B</strong>
+        <p>إدارة وطباعة استمارات تحاليل الفيروسات المعوية.</p>
+        <a class="campaign-link" href="{{ url_for('main.new_form_page') }}">
+            <svg class="icon"><use href="#icon-plus"></use></svg>
+            <span>فتح استمارة جديدة</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span>متصل بقاعدة البيانات</span>
+    </div>
+</aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>

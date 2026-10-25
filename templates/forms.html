@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | الاستمارات المعملية</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+</head>
+<body class="forms-page">
+    {% set active_nav = 'lab-forms' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>المعمل المرجعي</span>
+                    <h2>الاستمارات المعملية</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="date-chip">
+                        <svg class="icon"><use href="#icon-calendar"></use></svg>
+                        <span id="current-date">—</span>
+                    </div>
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مستخدم النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">L20B</span>
+                            <h2>سجل استمارات التشخيص</h2>
+                            <p>إدارة وطباعة استمارات الفيروسات المعوية لجميع العينات الواردة</p>
+                        </div>
+                        <div class="panel-actions">
+                            <a class="button button-primary" href="{{ url_for('main.new_form_page') }}">
+                                <svg class="icon"><use href="#icon-plus"></use></svg>
+                                <span>استمارة جديدة</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="filter-bar">
+                        <label class="search-field">
+                            <svg class="icon"><use href="#icon-search"></use></svg>
+                            <input id="search-input" type="search" placeholder="ابحث بالاسم أو الرقم المعملي أو الرقم القومي" autocomplete="off">
+                        </label>
+                        <label class="select-field">
+                            <select id="filter-governorate" aria-label="المحافظة">
+                                <option value="">كل المحافظات</option>
+                                {% for governorate in GOVERNORATES %}
+                                <option value="{{ governorate }}">{{ governorate }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="select-field">
+                            <select id="filter-result" aria-label="النتيجة النهائية">
+                                <option value="">كل النتائج</option>
+                                {% for result in FORM_RESULTS %}
+                                <option value="{{ result }}">{{ result }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <button class="filter-reset" id="reset-filters" type="button">
+                            <svg class="icon"><use href="#icon-refresh"></use></svg>
+                            <span>إعادة تعيين</span>
+                        </button>
+                    </div>
+
+                    <div class="bulk-bar" id="bulk-bar" hidden>
+                        <span class="bulk-count" id="selection-count">لم يتم تحديد أي استمارة</span>
+                        <div class="bulk-actions">
+                            <button class="button button-ghost button-compact" id="clear-selection" type="button">
+                                <svg class="icon"><use href="#icon-close"></use></svg>
+                                <span>إلغاء التحديد</span>
+                            </button>
+                            <button class="button button-primary button-compact" id="export-selected" type="button" disabled>
+                                <svg class="icon"><use href="#icon-printer"></use></svg>
+                                <span>تصدير PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid forms-summary" aria-label="ملخص الاستمارات">
+                        <article class="stat-card">
+                            <div class="stat-icon teal"><svg class="icon"><use href="#icon-file"></use></svg></div>
+                            <div class="stat-copy">
+                                <span>إجمالي الاستمارات</span>
+                                <strong id="summary-total">—</strong>
+                                <small>مرفوعة على النظام</small>
+                            </div>
+                            <span class="stat-accent"></span>
+                        </article>
+                        <article class="stat-card">
+                            <div class="stat-icon green"><svg class="icon"><use href="#icon-check"></use></svg></div>
+                            <div class="stat-copy">
+                                <span>نتائج نهائية</span>
+                                <strong id="summary-finalized">—</strong>
+                                <small>تم اعتماد نتيجتها</small>
+                            </div>
+                            <span class="stat-accent"></span>
+                        </article>
+                        <article class="stat-card">
+                            <div class="stat-icon amber"><svg class="icon"><use href="#icon-clock"></use></svg></div>
+                            <div class="stat-copy">
+                                <span>قيد الإنجاز</span>
+                                <strong id="summary-pending">—</strong>
+                                <small>لم تصدر النتيجة النهائية</small>
+                            </div>
+                            <span class="stat-accent"></span>
+                        </article>
+                        <article class="stat-card">
+                            <div class="stat-icon red"><svg class="icon"><use href="#icon-alert"></use></svg></div>
+                            <div class="stat-copy">
+                                <span>نتائج إيجابية</span>
+                                <strong id="summary-positive">—</strong>
+                                <small>تحتاج متابعة فورية</small>
+                            </div>
+                            <span class="stat-accent"></span>
+                        </article>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="select-col">
+                                        <input id="select-all-forms" type="checkbox" aria-label="تحديد كل الاستمارات">
+                                    </th>
+                                    <th>الرقم المعملي</th>
+                                    <th>اسم المريض</th>
+                                    <th>الرقم القومي</th>
+                                    <th>السن</th>
+                                    <th>المركز</th>
+                                    <th>المحافظة</th>
+                                    <th>تاريخ المرض</th>
+                                    <th>النتيجة النهائية</th>
+                                    <th>المستخدم</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="forms-body">
+                                <tr class="loading-row">
+                                    <td colspan="11">جارِ تحميل الاستمارات…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer">
+                        <span id="results-count">—</span>
+                        <div class="pagination">
+                            <button class="page-button" id="prev-page" type="button" aria-label="الصفحة السابقة">
+                                <svg class="icon"><use href="#icon-chevron-right"></use></svg>
+                            </button>
+                            <span id="page-indicator">صفحة 1</span>
+                            <button class="page-button" id="next-page" type="button" aria-label="الصفحة التالية">
+                                <svg class="icon"><use href="#icon-chevron-left"></use></svg>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="empty-state" id="forms-empty" hidden>
+                    <div class="empty-state-icon"><svg class="icon"><use href="#icon-file"></use></svg></div>
+                    <strong>لا توجد استمارات مطابقة</strong>
+                    <span>جرّب تعديل معايير البحث أو أنشئ استمارة معملية جديدة.</span>
+                    <a class="button button-primary" href="{{ url_for('main.new_form_page') }}">
+                        <svg class="icon"><use href="#icon-plus"></use></svg>
+                        <span>استمارة جديدة</span>
+                    </a>
+                </div>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>المصدر: WHO / VACSERA</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/forms.js') }}" defer></script>
+</body>
+</html>

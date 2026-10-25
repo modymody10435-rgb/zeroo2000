@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polio Lab | تصدير PDF</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+</head>
+<body class="batch-print">
+    {% include "_icons.html" %}
+    <div class="batch-toolbar no-print">
+        <span>عدد الاستمارات المحددة: {{ forms|length }}</span>
+        <button class="button button-primary" type="button" id="batch-print-button">
+            <svg class="icon"><use href="#icon-printer"></use></svg>
+            <span>طباعة / حفظ ملف PDF</span>
+        </button>
+        <a class="button button-ghost" href="{{ url_for('main.forms_page') }}">إلغاء</a>
+    </div>
+
+    <div class="batch-sheets">
+        {% for form in forms %}
+        {% include "_sheet.html" %}
+        {% endfor %}
+    </div>
+
+    <script>
+        (function () {
+            "use strict";
+            const button = document.getElementById("batch-print-button");
+            button.addEventListener("click", function () {
+                window.print();
+            });
+            window.addEventListener("load", function () {
+                window.setTimeout(function () {
+                    window.print();
+                }, 400);
+            });
+        })();
+    </script>
+</body>
+</html>

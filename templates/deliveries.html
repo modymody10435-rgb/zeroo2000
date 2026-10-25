@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | التسليم إلى EBI</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
+</head>
+<body class="users-page deliveries-page">
+    {% set active_nav = 'deliveries' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>التسليم الإلكتروني</span>
+                    <h2>تسليم الاستمارات إلى EBI</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مدير النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">EBI</span>
+                            <h2>تسليم الاستمارات المراجعة</h2>
+                            <p>اختر الاستمارات المكتملة المراجعة الأولى والثانية، وسجّل بيانات المستلم، ثم أرسلها إلى نظام EBI عبر واجهة API.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <a class="button button-secondary" href="{{ url_for('main.reviews_page') }}">
+                                <svg class="icon"><use href="#icon-check"></use></svg>
+                                <span>سجل المراجعات</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if sent_delivery %}
+                    <div class="users-notices">
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>
+                                تم تسليم <strong>{{ sent_delivery.form_count }}</strong> استمارة إلى EBI بنجاح.
+                                المرجع: <strong dir="ltr">{{ sent_delivery.reference }}</strong>،
+                                وتوقيت العملية: {{ sent_delivery.created_at|datetime_ar }}.
+                                <a class="delivery-inline-link" href="{{ url_for('main.ebi_delivery_detail', delivery_id=sent_delivery.id) }}">عرض التفاصيل</a>
+                            </span>
+                        </div>
+                    </div>
+                    {% elif failed_delivery %}
+                    <div class="users-notices">
+                        <div class="form-alert" role="alert">
+                            <svg class="icon"><use href="#icon-alert"></use></svg>
+                            <span>
+                                فشل تسليم العملية <strong dir="ltr">{{ failed_delivery.reference }}</strong>:
+                                {{ failed_delivery.error_message or 'تعذر إرسال البيانات إلى EBI.' }}
+                                <a class="delivery-inline-link" href="{{ url_for('main.ebi_delivery_detail', delivery_id=failed_delivery.id) }}">عرض التفاصيل</a>
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="delivery-stats">
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-ready"><svg class="icon"><use href="#icon-file"></use></svg></span>
+                            <div><strong>{{ stats.eligible }}</strong><small>جاهزة للتسليم</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-sent"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                            <div><strong>{{ stats.delivered }}</strong><small>تم تسليمها</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-history"><svg class="icon"><use href="#icon-upload"></use></svg></span>
+                            <div><strong>{{ stats.deliveries }}</strong><small>عمليات التسليم</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-failed"><svg class="icon"><use href="#icon-alert"></use></svg></span>
+                            <div><strong>{{ stats.failed }}</strong><small>عمليات فاشلة</small></div>
+                        </article>
+                    </div>
+
+                    <div class="delivery-pdf-card{{ ' has-error' if combined_pdf.error }}">
+                        <span class="delivery-pdf-icon">
+                            <svg class="icon"><use href="#icon-file"></use></svg>
+                        </span>
+                        <div class="delivery-pdf-copy">
+                            <span class="section-kicker">PDF مجمع</span>
+                            <strong>ملف الاستمارات الجاهزة للتسليم</strong>
+                            {% if combined_pdf.available %}
+                            <p>
+                                يضم <strong>{{ combined_pdf.form_count }}</strong> استمارة، وآخر تحديث
+                                {{ combined_pdf.generated_at|datetime_ar }}.
+                            </p>
+                            {% elif combined_pdf.error %}
+                            <p>تعذر إنشاء الملف تلقائياً: {{ combined_pdf.error }}</p>
+                            {% else %}
+                            <p>سيُنشأ تلقائياً بعد اكتمال المراجعة الأولى والثانية لأول استمارة.</p>
+                            {% endif %}
+                        </div>
+                        <div class="delivery-pdf-actions">
+                            {% if combined_pdf.available %}
+                            <a class="button button-primary button-compact" href="{{ url_for('main.ebi_delivery_pdf') }}" target="_blank" rel="noopener">
+                                <svg class="icon"><use href="#icon-file"></use></svg>
+                                <span>عرض PDF</span>
+                            </a>
+                            <a class="button button-secondary button-compact" href="{{ url_for('main.ebi_delivery_pdf', download=1) }}">
+                                <svg class="icon"><use href="#icon-download"></use></svg>
+                                <span>تنزيل</span>
+                            </a>
+                            {% endif %}
+                            {% if eligible_forms %}
+                            <form method="post" action="{{ url_for('main.ebi_delivery_pdf_regenerate') }}">
+                                <button class="button button-ghost button-compact" type="submit">
+                                    <svg class="icon"><use href="#icon-refresh"></use></svg>
+                                    <span>تحديث الملف</span>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <form class="delivery-form" id="delivery-form" method="post" action="{{ url_for('main.ebi_delivery_submit') }}" novalidate>
+                        <fieldset class="delivery-fieldset">
+                            <legend>بيانات التسليم</legend>
+
+                            {% if errors %}
+                            <div class="form-alert" role="alert">
+                                <svg class="icon"><use href="#icon-alert"></use></svg>
+                                <span>يرجى تصحيح الحقول المحددة أدناه قبل التسليم.</span>
+                            </div>
+                            {% endif %}
+                            {% if errors.api %}
+                            <div class="form-alert" role="alert">
+                                <svg class="icon"><use href="#icon-alert"></use></svg>
+                                <span>{{ errors.api }}</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-grid delivery-form-grid">
+                                <div class="form-field{{ ' has-error' if errors.recipient_name }}">
+                                    <label for="recipient-name">اسم المستلم <span class="required">*</span></label>
+                                    <input
+                                        id="recipient-name"
+                                        name="recipient_name"
+                                        type="text"
+                                        value="{{ values.recipient_name }}"
+                                        maxlength="160"
+                                        autocomplete="off"
+                                        required
+                                    >
+                                    <span class="field-error">{{ errors.recipient_name or '' }}</span>
+                                </div>
+
+                                <div class="form-field{{ ' has-error' if errors.recipient_entity }}">
+                                    <label for="recipient-entity">جهة المستلم</label>
+                                    <input
+                                        id="recipient-entity"
+                                        name="recipient_entity"
+                                        type="text"
+                                        value="{{ values.recipient_entity }}"
+                                        maxlength="160"
+                                        autocomplete="off"
+                                    >
+                                    <span class="field-error">{{ errors.recipient_entity or '' }}</span>
+                                </div>
+
+                                <div class="form-field{{ ' has-error' if errors.recipient_contact }}">
+                                    <label for="recipient-contact">بيانات اتصال المستلم</label>
+                                    <input
+                                        id="recipient-contact"
+                                        name="recipient_contact"
+                                        type="text"
+                                        value="{{ values.recipient_contact }}"
+                                        maxlength="200"
+                                        autocomplete="off"
+                                        placeholder="بريد إلكتروني أو رقم هاتف"
+                                    >
+                                    <span class="field-error">{{ errors.recipient_contact or '' }}</span>
+                                </div>
+
+                                <div class="form-field{{ ' has-error' if errors.delivery_date }}">
+                                    <label for="delivery-date">تاريخ التسليم <span class="required">*</span></label>
+                                    <input
+                                        id="delivery-date"
+                                        name="delivery_date"
+                                        type="date"
+                                        value="{{ values.delivery_date }}"
+                                        required
+                                    >
+                                    <span class="field-error">{{ errors.delivery_date or '' }}</span>
+                                </div>
+
+                                <div class="form-field{{ ' has-error' if errors.delivered_by }}">
+                                    <label for="delivered-by">اسم الشخص الذي سلّم الاستمارات <span class="required">*</span></label>
+                                    <input
+                                        id="delivered-by"
+                                        name="delivered_by"
+                                        type="text"
+                                        value="{{ values.delivered_by }}"
+                                        maxlength="160"
+                                        autocomplete="off"
+                                        required
+                                    >
+                                    <span class="field-error">{{ errors.delivered_by or '' }}</span>
+                                </div>
+
+                                <div class="form-field span-two{{ ' has-error' if errors.recipient_notes }}">
+                                    <label for="recipient-notes">تفاصيل المستلم</label>
+                                    <textarea
+                                        id="recipient-notes"
+                                        name="recipient_notes"
+                                        maxlength="2000"
+                                        placeholder="جهة الاستلام، القسم، أو أي تفاصيل إضافية عن المستلم"
+                                    >{{ values.recipient_notes }}</textarea>
+                                    <span class="field-error">{{ errors.recipient_notes or '' }}</span>
+                                </div>
+
+                                <div class="form-field span-two{{ ' has-error' if errors.notes }}">
+                                    <label for="delivery-notes">ملاحظات التسليم</label>
+                                    <textarea
+                                        id="delivery-notes"
+                                        name="notes"
+                                        maxlength="2000"
+                                        placeholder="ملاحظات اختيارية عن عملية التسليم"
+                                    >{{ values.notes }}</textarea>
+                                    <span class="field-error">{{ errors.notes or '' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="delivery-auto-audit">
+                                <svg class="icon"><use href="#icon-clock"></use></svg>
+                                <span>سيتم توثيق تاريخ ووقت العملية تلقائيًا عند حفظ التسليم.</span>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="delivery-fieldset delivery-forms-fieldset">
+                            <legend>الاستمارات المراجعة الجاهزة</legend>
+                            {% if eligible_forms %}
+                            <div class="delivery-table-hint">
+                                <span>تنتقل الاستمارات إلى هنا تلقائياً بعد اكتمال المراجعتين. اختر ما تريد تسليمه إلى EBI.</span>
+                                <label class="delivery-select-all">
+                                    <input id="select-all-deliveries" type="checkbox">
+                                    <span>تحديد الكل</span>
+                                </label>
+                            </div>
+                            <div class="table-wrap users-table-wrap">
+                                <table class="users-table delivery-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" class="delivery-select-heading"></th>
+                                            <th scope="col">الاستمارة</th>
+                                            <th scope="col">المريض</th>
+                                            <th scope="col">المحافظة</th>
+                                            <th scope="col">المراجعة الأولى</th>
+                                            <th scope="col">المراجعة الثانية</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for form in eligible_forms %}
+                                        <tr>
+                                            <td class="delivery-select-cell">
+                                                <input
+                                                    class="delivery-form-checkbox"
+                                                    type="checkbox"
+                                                    name="form_ids"
+                                                    value="{{ form.id }}"
+                                                    aria-label="تحديد الاستمارة #{{ form.id }}"
+                                                    {% if form.id in values.form_ids %}checked{% endif %}
+                                                >
+                                            </td>
+                                            <td>
+                                                <div class="reviews-form-id">
+                                                    <strong dir="ltr">#{{ form.id }}</strong>
+                                                    <span dir="auto">{{ form.lab_number }}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{ form.patient_name }}</td>
+                                            <td>{{ form.governorate or '—' }}</td>
+                                            <td>
+                                                <span class="delivery-reviewer">{{ form.first_reviewer_name }}</span>
+                                                <small class="delivery-review-time">{{ form.first_reviewed_at|datetime_ar }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="delivery-reviewer">{{ form.second_reviewer_name }}</span>
+                                                <small class="delivery-review-time">{{ form.second_reviewed_at|datetime_ar }}</small>
+                                                {% if form.delivery_queued_at %}
+                                                <small class="delivery-queued-time">أُضيفت تلقائياً {{ form.delivery_queued_at|datetime_ar }}</small>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="delivery-empty">
+                                <span class="delivery-empty-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                                <div>
+                                    <strong>لا توجد استمارات جاهزة للتسليم حالياً.</strong>
+                                    <span>تظهر هنا الاستمارات المكتملة المراجعة الأولى والثانية وغير المسلّمة مسبقاً.</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="delivery-form-actions">
+                                <span class="delivery-selected-count{{ ' has-error' if errors.form_ids }}">
+                                    <span>الاستمارات المحددة:</span> <strong id="delivery-selected-count">0</strong>
+                                    <span class="field-error" id="delivery-selected-error" aria-live="polite">{{ errors.form_ids or '' }}</span>
+                                </span>
+                                <button class="button button-primary" type="submit"{% if not eligible_forms %} disabled{% endif %}>
+                                    <svg class="icon"><use href="#icon-upload"></use></svg>
+                                    <span>تسليم المحدد إلى EBI</span>
+                                </button>
+                            </div>
+                        </fieldset>
+                    </form>
+
+                    <div class="delivery-history">
+                        <div class="delivery-section-heading">
+                            <div>
+                                <span class="section-kicker">السجل</span>
+                                <h3>عمليات التسليم السابقة</h3>
+                            </div>
+                            <span class="delivery-history-count">آخر {{ history|length }} عملية</span>
+                        </div>
+
+                        <div class="table-wrap users-table-wrap">
+                            <table class="users-table delivery-history-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">المرجع</th>
+                                        <th scope="col">المستلم</th>
+                                        <th scope="col">تاريخ التسليم</th>
+                                        <th scope="col">سلّمها</th>
+                                        <th scope="col">الاستمارات</th>
+                                        <th scope="col">توقيت العملية</th>
+                                        <th scope="col">الحالة</th>
+                                        <th scope="col" class="users-actions-heading">التفاصيل</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for delivery in history %}
+                                    <tr>
+                                        <td><strong class="delivery-reference" dir="ltr">{{ delivery.reference }}</strong></td>
+                                        <td>
+                                            <span class="delivery-recipient">{{ delivery.recipient_name }}</span>
+                                            {% if delivery.recipient_entity %}<small>{{ delivery.recipient_entity }}</small>{% endif %}
+                                        </td>
+                                        <td><span dir="ltr">{{ delivery.delivery_date }}</span></td>
+                                        <td>{{ delivery.delivered_by }}</td>
+                                        <td>{{ delivery.form_count }}</td>
+                                        <td>{{ delivery.created_at|datetime_ar }}</td>
+                                        <td>
+                                            <span class="delivery-status is-{{ delivery.status }}">{{ EBI_DELIVERY_STATUSES.get(delivery.status, delivery.status) }}</span>
+                                        </td>
+                                        <td>
+                                            <a class="button button-secondary button-compact" href="{{ url_for('main.ebi_delivery_detail', delivery_id=delivery.id) }}">
+                                                <span>عرض</span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr class="empty-row">
+                                        <td colspan="8">لا توجد عمليات تسليم مسجلة بعد.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>التسليم الإلكتروني EBI</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/deliveries.js') }}" defer></script>
+</body>
+</html>

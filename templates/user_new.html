@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | إضافة مستخدم</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+</head>
+<body class="users-page">
+    {% set active_nav = 'new-user' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>إدارة المستخدمين</span>
+                    <h2>إضافة مستخدم</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مستخدم النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">المستخدمون</span>
+                            <h2>إنشاء حساب جديد</h2>
+                            <p>أضف مستخدماً جديداً ليتمكن من تسجيل الدخول إلى النظام.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <a class="button button-secondary" href="{{ url_for('main.users_page') }}">
+                                <svg class="icon"><use href="#icon-users"></use></svg>
+                                <span>قائمة المستخدمين</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="users-layout">
+                        <form class="users-form" id="user-form" method="post" action="{{ url_for('main.new_user_page') }}" novalidate>
+                            {% if errors %}
+                            <div class="form-alert" role="alert">
+                                <svg class="icon"><use href="#icon-alert"></use></svg>
+                                <span>يرجى تصحيح الحقول المحددة أدناه.</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-grid users-form-grid">
+                                <div class="form-field span-two{{ ' has-error' if errors.username }}" id="username-field">
+                                    <label for="username">اسم المستخدم <span class="required">*</span></label>
+                                    <input
+                                        id="username"
+                                        name="username"
+                                        type="text"
+                                        value="{{ values.username }}"
+                                        placeholder="مثال: lab.user"
+                                        autocomplete="off"
+                                        spellcheck="false"
+                                        minlength="3"
+                                        maxlength="50"
+                                        required
+                                        {% if errors.username %}aria-invalid="true" aria-describedby="username-error"{% endif %}
+                                    >
+                                    <span class="field-error" id="username-error" aria-live="polite">{{ errors.username or '' }}</span>
+                                </div>
+
+                                <div class="form-field{{ ' has-error' if errors.password }}" id="password-field">
+                                    <label for="password">كلمة المرور <span class="required">*</span></label>
+                                    <div class="password-control">
+                                        <input
+                                            id="password"
+                                            name="password"
+                                            type="password"
+                                            placeholder="8 أحرف على الأقل"
+                                            autocomplete="new-password"
+                                            minlength="8"
+                                            maxlength="128"
+                                            required
+                                            {% if errors.password %}aria-invalid="true" aria-describedby="password-error"{% endif %}
+                                        >
+                                        <button class="password-reveal" type="button" data-toggle-password="password" aria-label="إظهار كلمة المرور" aria-pressed="false">
+                                            <svg class="icon password-eye"><use href="#icon-eye"></use></svg>
+                                            <svg class="icon password-eye-off"><use href="#icon-eye-off"></use></svg>
+                                        </button>
+                                    </div>
+                                    <span class="field-error" id="password-error" aria-live="polite">{{ errors.password or '' }}</span>
+                                </div>
+
+                                <div class="form-field{{ ' has-error' if errors.password_confirm }}" id="password-confirm-field">
+                                    <label for="password_confirm">تأكيد كلمة المرور <span class="required">*</span></label>
+                                    <div class="password-control">
+                                        <input
+                                            id="password_confirm"
+                                            name="password_confirm"
+                                            type="password"
+                                            placeholder="أعد إدخال كلمة المرور"
+                                            autocomplete="new-password"
+                                            minlength="8"
+                                            maxlength="128"
+                                            required
+                                            {% if errors.password_confirm %}aria-invalid="true" aria-describedby="password-confirm-error"{% endif %}
+                                        >
+                                        <button class="password-reveal" type="button" data-toggle-password="password_confirm" aria-label="إظهار كلمة المرور" aria-pressed="false">
+                                            <svg class="icon password-eye"><use href="#icon-eye"></use></svg>
+                                            <svg class="icon password-eye-off"><use href="#icon-eye-off"></use></svg>
+                                        </button>
+                                    </div>
+                                    <span class="field-error" id="password-confirm-error" aria-live="polite">{{ errors.password_confirm or '' }}</span>
+                                </div>
+
+                                <div class="form-field span-two{{ ' has-error' if errors.role }}" id="role-field">
+                                    <label for="role">دور الحساب <span class="required">*</span></label>
+                                    <select
+                                        id="role"
+                                        name="role"
+                                        required
+                                        {% if errors.role %}aria-invalid="true" aria-describedby="role-error"{% endif %}
+                                    >
+                                        <option value="user" {% if values.role != 'admin' %}selected{% endif %}>مستخدم — وصول للاستمارات فقط</option>
+                                        <option value="admin" {% if values.role == 'admin' %}selected{% endif %}>مدير — وصول كامل وإدارة المستخدمين</option>
+                                    </select>
+                                    <span class="field-error" id="role-error" aria-live="polite">{{ errors.role or '' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="users-form-actions">
+                                <button class="button button-primary" type="submit">
+                                    <svg class="icon"><use href="#icon-user-plus"></use></svg>
+                                    <span>إنشاء المستخدم</span>
+                                </button>
+                                <a class="button button-secondary" href="{{ url_for('main.users_page') }}">
+                                    <span>إلغاء</span>
+                                </a>
+                            </div>
+                        </form>
+
+                        <aside class="users-guide" aria-label="إرشادات إنشاء الحساب">
+                            <span class="users-guide-icon"><svg class="icon"><use href="#icon-shield"></use></svg></span>
+                            <h3>حساب وصول جديد</h3>
+                            <p>سيتمكن المستخدم الجديد من الدخول إلى النظام مباشرة بعد إنشاء الحساب.</p>
+                            <ul>
+                                <li><svg class="icon"><use href="#icon-check"></use></svg><span>اسم مستخدم فريد بدون مسافات.</span></li>
+                                <li><svg class="icon"><use href="#icon-check"></use></svg><span>كلمة مرور لا تقل عن 8 أحرف.</span></li>
+                                <li><svg class="icon"><use href="#icon-check"></use></svg><span>دور «مدير» يسمح بإدارة المستخدمين، ودور «مستخدم» للاستمارات فقط.</span></li>
+                                <li><svg class="icon"><use href="#icon-check"></use></svg><span>تُخزَّن كلمة المرور مشفّرة ولا يمكن استعراضها.</span></li>
+                            </ul>
+                        </aside>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>المصدر: WHO / VACSERA</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/users.js') }}" defer></script>
+</body>
+</html>

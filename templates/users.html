@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | المستخدمون</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+</head>
+<body class="users-page">
+    {% set active_nav = 'users' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>إدارة المستخدمين</span>
+                    <h2>المستخدمون</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مستخدم النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">المستخدمون</span>
+                            <h2>سجل المستخدمين</h2>
+                            <p>إدارة حسابات الدخول إلى النظام وتحديث كلمات المرور أو حذف الحسابات.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <a class="button button-primary" href="{{ url_for('main.new_user_page') }}">
+                                <svg class="icon"><use href="#icon-user-plus"></use></svg>
+                                <span>إضافة مستخدم</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if created or updated or deleted or error in ['self', 'notfound'] %}
+                    <div class="users-notices">
+                        {% if created %}
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>تم إنشاء المستخدم <strong dir="auto">{{ created }}</strong> بنجاح، ويمكنه الآن تسجيل الدخول.</span>
+                        </div>
+                        {% elif updated %}
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>تم تحديث كلمة مرور المستخدم <strong dir="auto">{{ updated }}</strong> بنجاح.</span>
+                        </div>
+                        {% elif deleted %}
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>تم حذف المستخدم <strong dir="auto">{{ deleted }}</strong> بنجاح.</span>
+                        </div>
+                        {% elif error == 'self' %}
+                        <div class="form-alert" role="alert">
+                            <svg class="icon"><use href="#icon-alert"></use></svg>
+                            <span>لا يمكنك حذف الحساب الذي تستخدمه حالياً.</span>
+                        </div>
+                        {% elif error == 'notfound' %}
+                        <div class="form-alert" role="alert">
+                            <svg class="icon"><use href="#icon-alert"></use></svg>
+                            <span>المستخدم المطلوب غير موجود، ربما تم حذفه مسبقاً.</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="users-summary">
+                        <span class="users-summary-icon"><svg class="icon"><use href="#icon-users"></use></svg></span>
+                        <div>
+                            <strong>إجمالي الحسابات: {{ users|length }}</strong>
+                            <small>الأحدث إنشاءً يظهر أولاً.</small>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap users-table-wrap">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">المستخدم</th>
+                                    <th scope="col">تاريخ الإنشاء</th>
+                                    <th scope="col" class="users-actions-heading">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <div class="users-identity">
+                                            <span class="users-avatar">{{ user.username[0]|upper }}</span>
+                                            <span class="users-identity-copy">
+                                                <span class="users-name" dir="auto">{{ user.username }}</span>
+                                                <span class="users-role{{ ' is-admin' if user.role == 'admin' }}">{{ 'مدير' if user.role == 'admin' else 'مستخدم' }}</span>
+                                                {% if user.is_current %}
+                                                <span class="users-badge">أنت</span>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="users-date" dir="ltr">{{ user.created_at[:10] }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="users-actions">
+                                            <a class="button button-secondary button-compact" href="{{ url_for('main.edit_user_password_page', user_id=user.id) }}">
+                                                <svg class="icon"><use href="#icon-lock"></use></svg>
+                                                <span>تعديل كلمة المرور</span>
+                                            </a>
+                                            {% if user.is_current %}
+                                            <button class="button button-danger button-compact" type="button" disabled title="لا يمكنك حذف حسابك الحالي">
+                                                <svg class="icon"><use href="#icon-trash"></use></svg>
+                                                <span>حذف</span>
+                                            </button>
+                                            {% else %}
+                                            <form class="users-delete-form" method="post" action="{{ url_for('main.delete_user', user_id=user.id) }}" data-confirm="هل تريد حذف المستخدم {{ user.username }}؟ لا يمكن التراجع عن هذا الإجراء.">
+                                                <button class="button button-danger button-compact" type="submit">
+                                                    <svg class="icon"><use href="#icon-trash"></use></svg>
+                                                    <span>حذف</span>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr class="empty-row">
+                                    <td colspan="3">لا يوجد مستخدمون مسجلون حتى الآن.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer users-table-footer">
+                        <span>إجمالي الحسابات: {{ users|length }}</span>
+                        <span>يمكن تعديل كلمة مرور أي حساب من زر «تعديل كلمة المرور».</span>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>المصدر: WHO / VACSERA</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/users.js') }}" defer></script>
+</body>
+</html>

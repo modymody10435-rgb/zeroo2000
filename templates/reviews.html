@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | مراجعة الاستمارات</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reviews.css') }}">
+</head>
+<body class="users-page reviews-page">
+    {% set active_nav = 'reviews' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>المعمل المرجعي</span>
+                    <h2>مراجعة الاستمارات</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مستخدم النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">المراجعة</span>
+                            <h2>سجل المراجعات</h2>
+                            <p>تسجيل المراجعة الأولى والثانية لكل استمارة، مع رفع ملف PDF مجمع. يحلّل النظام الملف تلقائيًا ويطبق المراجعة فقط على الاستمارات المطابقة، ويمكن تضييق النطاق من الجدول.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <a class="button button-secondary" href="{{ url_for('main.forms_page') }}">
+                                <svg class="icon"><use href="#icon-file"></use></svg>
+                                <span>سجل الاستمارات</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if saved %}
+                    <div class="users-notices">
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>تم حفظ بيانات المراجعة وتحديث مجلد الاستمارة.</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if batch_saved %}
+                    <div class="users-notices">
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>تم حفظ ملف المراجعة المجمع وتحديث {{ batch_saved }} استمارة.</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if delivery_notice %}
+                    <div class="users-notices">
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>
+                                تم تحويل <strong>{{ delivery_notice.queued }}</strong> استمارة تلقائياً إلى قسم <a href="{{ url_for('main.ebi_deliveries_page') }}">التسليم</a> بعد اكتمال المراجعتين.
+                                {% if delivery_notice.pdf_available %}
+                                وتم إنشاء ملف PDF المجمع وتحديثه.
+                                {% elif delivery_notice.pdf_enabled and delivery_notice.pdf_error %}
+                                لكن تعذر إنشاء ملف PDF المجمع: {{ delivery_notice.pdf_error }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="reviews-summary">
+                        <article class="reviews-stat">
+                            <span class="reviews-stat-icon"><svg class="icon"><use href="#icon-file"></use></svg></span>
+                            <div>
+                                <strong>{{ forms|length }}</strong>
+                                <small>إجمالي الاستمارات</small>
+                            </div>
+                        </article>
+                        <article class="reviews-stat is-reviewed">
+                            <span class="reviews-stat-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                            <div>
+                                <strong>{{ first_reviewed_count }}</strong>
+                                <small>المراجعة الأولى</small>
+                            </div>
+                        </article>
+                        <article class="reviews-stat is-reviewed">
+                            <span class="reviews-stat-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                            <div>
+                                <strong>{{ second_reviewed_count }}</strong>
+                                <small>المراجعة الثانية</small>
+                            </div>
+                        </article>
+                        <article class="reviews-stat is-pending">
+                            <span class="reviews-stat-icon"><svg class="icon"><use href="#icon-clock"></use></svg></span>
+                            <div>
+                                <strong>{{ pending_first_count }}</strong>
+                                <small>بانتظار المراجعة الأولى</small>
+                            </div>
+                        </article>
+                    </div>
+
+                    {% if batch_errors %}
+                    <div class="users-notices">
+                        <div class="form-alert" role="alert">
+                            <svg class="icon"><use href="#icon-alert"></use></svg>
+                            <span>تعذر رفع المراجعة المجمعة: {{ batch_errors.values()|join('، ') }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <form class="reviews-batch-form" method="post" action="{{ url_for('main.reviews_batch_upload') }}" enctype="multipart/form-data" novalidate>
+                        <details class="reviews-batch"{% if batch_errors %} open{% endif %}>
+                            <summary>
+                                <span class="reviews-batch-icon"><svg class="icon"><use href="#icon-upload"></use></svg></span>
+                                <span>
+                                    <strong>رفع مراجعة مجمعة بصيغة PDF</strong>
+                                    <small>ارفع ملف PDF ليُحلّل تلقائيًا وتُطبق المراجعة على الاستمارات المطابقة فقط.</small>
+                                </span>
+                                <svg class="icon reviews-batch-chevron"><use href="#icon-chevron-left"></use></svg>
+                            </summary>
+
+                            <div class="reviews-batch-body">
+                                <fieldset class="reviews-batch-mode">
+                                    <legend>نطاق التطبيق</legend>
+                                    <div class="reviews-batch-mode-options">
+                                        <label class="reviews-batch-mode-option">
+                                            <input type="radio" name="apply_mode" value="pdf"{% if batch_values.apply_mode != 'selected' %} checked{% endif %}>
+                                            <span>جميع الاستمارات المطابقة في ملف PDF</span>
+                                        </label>
+                                        <label class="reviews-batch-mode-option">
+                                            <input type="radio" name="apply_mode" value="selected"{% if batch_values.apply_mode == 'selected' %} checked{% endif %}>
+                                            <span>تحديد مجموعة من نتائج ملف PDF</span>
+                                        </label>
+                                    </div>
+                                    <p class="reviews-batch-mode-hint" id="batch-mode-hint">يتم دائمًا تحليل الملف واستبعاد أي استمارة غير موجودة فيه؛ التحديد اليدوي يقتصر على النتائج المطابقة.</p>
+                                </fieldset>
+
+                                <div class="reviews-batch-grid">
+                                    <div class="reviews-batch-field{{ ' has-error' if batch_errors.stage }}">
+                                        <label for="batch-stage">نوع المراجعة <span class="required">*</span></label>
+                                        <select id="batch-stage" name="stage" required>
+                                            <option value="first"{{ ' selected' if batch_values.stage == 'first' }}>المراجعة الأولى</option>
+                                            <option value="second"{{ ' selected' if batch_values.stage == 'second' }}>المراجعة الثانية</option>
+                                        </select>
+                                        <span class="field-error">{{ batch_errors.stage or '' }}</span>
+                                    </div>
+
+                                    <div class="reviews-batch-field{{ ' has-error' if batch_errors.reviewer_name }}">
+                                        <label for="batch-reviewer">اسم المراجع <span class="required">*</span></label>
+                                        <input
+                                            id="batch-reviewer"
+                                            name="reviewer_name"
+                                            type="text"
+                                            value="{{ batch_values.reviewer_name }}"
+                                            maxlength="120"
+                                            autocomplete="off"
+                                            required
+                                        >
+                                        <span class="field-error">{{ batch_errors.reviewer_name or '' }}</span>
+                                    </div>
+
+                                    <div class="reviews-batch-field{{ ' has-error' if batch_errors.reviewed_at }}">
+                                        <label for="batch-reviewed-at">تاريخ ووقت المراجعة <span class="required">*</span></label>
+                                        <input
+                                            id="batch-reviewed-at"
+                                            name="reviewed_at"
+                                            type="datetime-local"
+                                            value="{{ batch_values.reviewed_at }}"
+                                            step="60"
+                                            required
+                                        >
+                                        <span class="field-error">{{ batch_errors.reviewed_at or '' }}</span>
+                                    </div>
+
+                                    <div class="reviews-batch-field reviews-file-field{{ ' has-error' if batch_errors.review_pdf }}">
+                                        <label for="review-pdf">ملف المراجعة المجمع <span class="required">*</span></label>
+                                        <label class="reviews-file-input" for="review-pdf">
+                                            <svg class="icon"><use href="#icon-upload"></use></svg>
+                                            <span id="review-pdf-label">اختر ملف PDF</span>
+                                            <input id="review-pdf" name="review_pdf" type="file" accept=".pdf,application/pdf" required>
+                                        </label>
+                                        <span class="field-error" id="review-pdf-error" aria-live="polite">{{ batch_errors.review_pdf or '' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="reviews-batch-actions">
+                                    <span class="reviews-selected-count{{ ' has-error' if batch_errors.form_ids }}">
+                                        <span id="selection-label">الاستمارات المحددة:</span> <strong id="selected-count">0</strong>
+                                        <span class="reviews-auto-note" id="batch-auto-note" role="status" hidden>تم تحديد جميع الاستمارات تلقائيًا.</span>
+                                        <span class="field-error" id="selected-count-error" aria-live="polite">{{ batch_errors.form_ids or '' }}</span>
+                                    </span>
+                                    <button class="button button-primary" type="submit">
+                                        <svg class="icon"><use href="#icon-upload"></use></svg>
+                                        <span>رفع وحفظ المراجعة المجمعة</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </details>
+
+                        <div class="table-wrap users-table-wrap">
+                            <table class="users-table reviews-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="review-select-heading">
+                                            <input id="select-all-forms" type="checkbox" aria-label="تحديد كل الاستمارات">
+                                        </th>
+                                        <th scope="col">الاستمارة</th>
+                                        <th scope="col">المريض</th>
+                                        <th scope="col">المحافظة</th>
+                                        <th scope="col">المراجعة الأولى</th>
+                                        <th scope="col">المراجعة الثانية</th>
+                                        <th scope="col">ملف المراجعة</th>
+                                        <th scope="col" class="users-actions-heading">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in forms %}
+                                    <tr>
+                                        <td class="review-select-cell">
+                                            <input
+                                                class="review-form-checkbox"
+                                                type="checkbox"
+                                                name="form_ids"
+                                                value="{{ form.id }}"
+                                                aria-label="تحديد الاستمارة #{{ form.id }}"
+                                                {% if form.id in batch_values.form_ids %}checked{% endif %}
+                                            >
+                                        </td>
+                                        <td>
+                                            <div class="reviews-form-id">
+                                                <strong dir="ltr">#{{ form.id }}</strong>
+                                                <span dir="auto">{{ form.lab_number or '—' }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ form.patient_name or '—' }}</td>
+                                        <td>{{ form.governorate or '—' }}</td>
+                                        <td>
+                                            {% if form.first_reviewed_at %}
+                                            <div class="review-stage">
+                                                <strong dir="auto">{{ form.first_reviewer_name or '—' }}</strong>
+                                                <span class="reviews-datetime" dir="ltr">{{ form.first_reviewed_at|datetime_ar }}</span>
+                                            </div>
+                                            {% else %}
+                                            <span class="review-status">بانتظار المراجعة</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if form.second_reviewed_at %}
+                                            <div class="review-stage">
+                                                <strong dir="auto">{{ form.second_reviewer_name or '—' }}</strong>
+                                                <span class="reviews-datetime" dir="ltr">{{ form.second_reviewed_at|datetime_ar }}</span>
+                                            </div>
+                                            {% elif form.first_reviewed_at %}
+                                            <span class="review-status">بانتظار المراجعة الثانية</span>
+                                            {% else %}
+                                            <span class="review-status is-empty">لم تبدأ</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if form.pdf_path %}
+                                            <a class="review-pdf-link" href="{{ url_for('main.review_pdf', filename=form.pdf_path) }}" target="_blank" rel="noopener">
+                                                <svg class="icon"><use href="#icon-file"></use></svg>
+                                                <span>PDF</span>
+                                            </a>
+                                            {% else %}
+                                            <span class="reviews-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="users-actions">
+                                                <a class="button button-secondary button-compact" href="{{ url_for('main.review_form_page', form_id=form.id) }}">
+                                                    <svg class="icon"><use href="#icon-check"></use></svg>
+                                                    <span>{{ 'تعديل المراجعات' if form.first_reviewed_at or form.second_reviewed_at else 'مراجعة' }}</span>
+                                                </a>
+                                                <a class="button button-secondary button-compact" href="{{ url_for('main.edit_form_page', form_id=form.id) }}">
+                                                    <svg class="icon"><use href="#icon-file"></use></svg>
+                                                    <span>فتح الاستمارة</span>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr class="empty-row">
+                                        <td colspan="8">لا توجد استمارات للمراجعة حتى الآن.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+
+                    <div class="table-footer users-table-footer">
+                        <span>إجمالي الاستمارات: {{ forms|length }}</span>
+                        <span>تُطبق المراجعة فقط على الاستمارات المطابقة للرقم المعملي أو الرقم القومي داخل ملف PDF نصي.</span>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>المصدر: WHO / VACSERA</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/reviews.js') }}" defer></script>
+</body>
+</html>

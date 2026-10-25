@@ -1,0 +1,186 @@
+{% from "_macros.html" import date_field %}
+                <form class="form-sheet" id="lab-form" autocomplete="off" novalidate>
+                    <header class="sheet-header">
+                        <div class="sheet-org sheet-org--vacsera">
+                            <span class="logo-slot" aria-hidden="true">
+                                {% for logo in logos_right %}
+                                <img class="sheet-logo" src="{{ logo.url }}{{ '?v=' ~ logo.version if logo.version else '' }}" alt="">
+                                {% endfor %}
+                            </span>
+                            <p>الشركة المصرية</p>
+                            <p>للأمصال واللقاحات والادوية</p>
+                            <p class="org-strong">معمل تشخيص شلل الأطفال والفيروسات المعوية</p>
+                        </div>
+                        <div class="sheet-org sheet-org--who">
+                            <span class="logo-slot" aria-hidden="true">
+                                {% for logo in logos_left %}
+                                <img class="sheet-logo" src="{{ logo.url }}{{ '?v=' ~ logo.version if logo.version else '' }}" alt="">
+                                {% endfor %}
+                            </span>
+                            <p class="org-emphasis">المعامل المرجعية للصحة العالمية</p>
+                            <p class="org-emphasis">لتشخيص شلل الأطفال</p>
+                        </div>
+                    </header>
+
+                    <table class="paper-grid main-grid">
+                        <colgroup>
+                            <col class="col-national">
+                            <col class="col-lab">
+                            <col class="col-name">
+                            <col class="col-age">
+                            <col class="col-date">
+                            <col class="col-center">
+                            <col class="col-gov">
+                            <col class="col-condition">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th scope="col">الرقم القومي</th>
+                                <th scope="col">الرقم المعملي</th>
+                                <th scope="col">اسم المريض</th>
+                                <th scope="col">السن بالشهور</th>
+                                <th scope="col">تاريخ المرض</th>
+                                <th scope="col">المركز</th>
+                                <th scope="col">المحافظة</th>
+                                <th scope="col">حالة العينات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="value-row">
+                                <td>
+                                    <input name="national_id" type="text" inputmode="numeric" placeholder="—" value="{{ form.national_id if form else '' }}">
+                                </td>
+                                <td>
+                                    <input name="lab_number" type="text" placeholder="—" value="{{ form.lab_number if form else '' }}">
+                                </td>
+                                <td>
+                                    <input name="patient_name" type="text" placeholder="—" value="{{ form.patient_name if form else '' }}">
+                                </td>
+                                <td class="age-cell">
+                                    <table class="age-table">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span class="age-part">
+                                                        <span class="age-label">شهر</span>
+                                                        <input name="age_months" type="text" inputmode="numeric" maxlength="2" placeholder="—" value="{{ form.age_months if form else '' }}">
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="age-part">
+                                                        <span class="age-label">سنة</span>
+                                                        <input name="age_years" type="text" inputmode="numeric" maxlength="2" placeholder="—" value="{{ form.age_years if form else '' }}">
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td>
+                                    {{ date_field('illness_date', form.illness_date if form else '') }}
+                                </td>
+                                <td>
+                                    <input name="center" type="text" placeholder="—" value="{{ form.center if form else '' }}">
+                                </td>
+                                <td>
+                                    <input name="governorate" type="text" placeholder="—" value="{{ form.governorate if form else '' }}">
+                                </td>
+                                <td>
+                                    <span class="condition-fixed">جيدة</span>
+                                    <input type="hidden" name="sample_condition" value="جيدة">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table class="paper-grid samples-grid">
+                        <colgroup>
+                            <col class="col-label">
+                            <col class="col-sample">
+                            <col class="col-sample">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th scope="col" class="samples-corner"></th>
+                                <th scope="col" class="samples-head">العينة الأولى</th>
+                                <th scope="col" class="samples-head">العينة الثانية / الثالثة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row" class="row-label">تاريخ جمع العينة</th>
+                                <td>{{ date_field('sample1_collect_date', form.sample1_collect_date if form else '') }}</td>
+                                <td>{{ date_field('sample2_collect_date', form.sample2_collect_date if form else '') }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="row-label">تاريخ الاستلام</th>
+                                <td>{{ date_field('sample1_receive_date', form.sample1_receive_date if form else '') }}</td>
+                                <td>{{ date_field('sample2_receive_date', form.sample2_receive_date if form else '') }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="row-label">نتيجة L20B المبدئية</th>
+                                <td>
+                                    <select name="sample1_l20b">
+                                        <option value="">—</option>
+                                        {% for result in FORM_RESULTS %}
+                                        <option value="{{ result }}" {% if form and form.sample1_l20b == result %}selected{% endif %}>{{ result }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="sample2_l20b">
+                                        <option value="">—</option>
+                                        {% for result in FORM_RESULTS %}
+                                        <option value="{{ result }}" {% if form and form.sample2_l20b == result %}selected{% endif %}>{{ result }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="row-label">تاريخ النتيجة المبدئية</th>
+                                <td>{{ date_field('sample1_prelim_date', form.sample1_prelim_date if form else '') }}</td>
+                                <td>{{ date_field('sample2_prelim_date', form.sample2_prelim_date if form else '') }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="row-label">النتيجة النهائية</th>
+                                <td>
+                                    <input name="sample1_final" type="text" placeholder="—" value="{{ form.sample1_final if form else '' }}">
+                                </td>
+                                <td>
+                                    <input name="sample2_final" type="text" placeholder="—" value="{{ form.sample2_final if form else '' }}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="row-label">تاريخ النتيجة النهائية</th>
+                                <td>{{ date_field('sample1_final_date', form.sample1_final_date if form else '') }}</td>
+                                <td>{{ date_field('sample2_final_date', form.sample2_final_date if form else '') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {% set pdf_signature = pdf_images.get(form.signature_image, '') if pdf_images is defined and form and form.signature_image else '' %}
+                    {% set pdf_stamp = pdf_images.get(form.stamp_image, '') if pdf_images is defined and form and form.stamp_image else '' %}
+                    {% set signature_src = pdf_signature or (url_for('main.uploaded_file', filename=form.signature_image) if form and form.signature_image else (fixed_signature.url ~ ('?v=' ~ fixed_signature.version if fixed_signature.version else '') if fixed_signature else '')) %}
+                    {% set stamp_src = pdf_stamp or (url_for('main.uploaded_file', filename=form.stamp_image) if form and form.stamp_image else (fixed_stamp.url ~ ('?v=' ~ fixed_stamp.version if fixed_stamp.version else '') if fixed_stamp else '')) %}
+                    <footer class="sheet-footer">
+                        <div class="marks-area" id="marks-area">
+                            <div class="mark mark-signature" id="signature-mark" data-position="{{ form.signature_position if form else 'left' }}" {% if form and not form.show_signature %}hidden{% endif %}>
+                                <div class="footer-org">
+                                    <p>م/ المعامل المرجعية لتشخيص شلل الأطفال</p>
+                                    <p>والفيروسات المعوية</p>
+                                </div>
+                                <input class="signatory-input" name="signatory_name" type="text" placeholder="اسم الموقع" value="{{ form.signatory_name if form else 'ك/ أميرة يحيى زغلول' }}">
+                                <span class="mark-body">
+                                    <img id="signature-image" alt="توقيع أمين المعمل" {% if signature_src %}src="{{ signature_src }}" class="is-visible"{% endif %}>
+                                    <span class="mark-placeholder" id="signature-placeholder" {% if signature_src %}hidden{% endif %}>مكان التوقيع</span>
+                                </span>
+                            </div>
+                            <div class="mark mark-stamp" id="stamp-mark" data-position="{{ form.stamp_position if form else 'left' }}" {% if form and not form.show_stamp %}hidden{% endif %}>
+                                <span class="mark-body">
+                                    <img id="stamp-image" alt="الختم الرسمي" {% if stamp_src %}src="{{ stamp_src }}" class="is-visible"{% endif %}>
+                                    <span class="mark-placeholder" id="stamp-placeholder" {% if stamp_src %}hidden{% endif %}>الختم الرسمي</span>
+                                </span>
+                            </div>
+                        </div>
+                    </footer>
+                </form>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3543">
+    <title>Polio Lab | تسجيل الدخول</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body class="login-body">
+    {% include "_icons.html" %}
+
+    <main class="login-shell">
+        <section class="login-card" aria-labelledby="login-title">
+            <aside class="login-brand" aria-hidden="true">
+                <span class="login-brand-glow login-brand-glow--top"></span>
+                <span class="login-brand-glow login-brand-glow--bottom"></span>
+
+                <div class="login-brand-top">
+                    <span class="login-logo">
+                        <svg class="icon"><use href="#icon-shield"></use></svg>
+                    </span>
+                    <span class="login-brand-name">
+                        <strong>Polio Lab</strong>
+                        <small>نظام الصحة المخبرية</small>
+                    </span>
+                </div>
+
+                <div class="login-brand-main">
+                    <span class="login-tag">المعمل المرجعي لتشخيص شلل الأطفال</span>
+                    <h2>رعاية أدق،<br>وقرارات أسرع.</h2>
+                    <p>منصة موحّدة لإدارة استمارات L20B، ومتابعة نتائج العينات، وطباعة التقارير المعتمدة.</p>
+                </div>
+
+                <ul class="login-features">
+                    <li>
+                        <span class="login-feature-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                        <span>إدارة مركزية للاستمارات وبيانات المرضى</span>
+                    </li>
+                    <li>
+                        <span class="login-feature-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                        <span>طباعة استمارات L20B بمقاس A4 معتمدة</span>
+                    </li>
+                    <li>
+                        <span class="login-feature-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                        <span>بحث وتصفية فورية لنتائج العينات</span>
+                    </li>
+                </ul>
+
+                <div class="login-brand-footer">
+                    <span class="login-brand-dot"></span>
+                    <span>WHO / VACSERA</span>
+                </div>
+            </aside>
+
+            <div class="login-panel">
+                <div class="login-panel-inner">
+                    <div class="login-mobile-brand">
+                        <span class="login-logo">
+                            <svg class="icon"><use href="#icon-shield"></use></svg>
+                        </span>
+                        <span class="login-brand-name">
+                            <strong>Polio Lab</strong>
+                            <small>نظام الصحة المخبرية</small>
+                        </span>
+                    </div>
+
+                    <header class="login-head">
+                        <span class="login-kicker">بوابة الدخول</span>
+                        <h1 id="login-title">تسجيل الدخول</h1>
+                        <p>أدخل بيانات حسابك للوصول إلى نظام إدارة الاستمارات.</p>
+                    </header>
+
+                    <div class="login-alert" id="login-error" role="alert" {% if not error %}hidden{% endif %}>
+                        <svg class="icon"><use href="#icon-alert"></use></svg>
+                        <span id="login-error-text">{{ error }}</span>
+                    </div>
+
+                    <form class="login-form" id="login-form" method="post" action="{{ url_for('main.login_page') }}" data-login-url="{{ url_for('main.api_login') }}" novalidate>
+                        <input type="hidden" name="next" value="{{ next }}">
+
+                        <div class="login-field" id="username-field">
+                            <label class="login-label" for="username">اسم المستخدم</label>
+                            <div class="login-control">
+                                <svg class="icon login-control-icon"><use href="#icon-user"></use></svg>
+                                <input
+                                    id="username"
+                                    name="username"
+                                    type="text"
+                                    value="{{ username }}"
+                                    placeholder="أدخل اسم المستخدم"
+                                    autocomplete="username"
+                                    spellcheck="false"
+                                    required
+                                    autofocus
+                                    aria-describedby="username-error"
+                                >
+                            </div>
+                            <span class="login-field-error" id="username-error" aria-live="polite"></span>
+                        </div>
+
+                        <div class="login-field" id="password-field">
+                            <label class="login-label" for="password">كلمة المرور</label>
+                            <div class="login-control">
+                                <svg class="icon login-control-icon"><use href="#icon-lock"></use></svg>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="أدخل كلمة المرور"
+                                    autocomplete="current-password"
+                                    required
+                                    aria-describedby="password-error"
+                                >
+                                <button class="login-reveal" id="toggle-password" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">
+                                    <svg class="icon login-eye"><use href="#icon-eye"></use></svg>
+                                    <svg class="icon login-eye-off"><use href="#icon-eye-off"></use></svg>
+                                </button>
+                            </div>
+                            <span class="login-field-error" id="password-error" aria-live="polite"></span>
+                        </div>
+
+                        <button class="login-submit" id="login-submit" type="submit">
+                            <span class="login-submit-text">تسجيل الدخول</span>
+                            <span class="login-spinner" aria-hidden="true"></span>
+                            <svg class="icon login-submit-icon"><use href="#icon-arrow-left"></use></svg>
+                        </button>
+                    </form>
+
+                    <p class="login-footnote">
+                        الوصول مخصص للمصرّح لهم فقط. تُسجَّل عمليات الدخول لأغراض المتابعة.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
+</body>
+</html>

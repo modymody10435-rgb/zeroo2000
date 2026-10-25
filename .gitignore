@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+data/*.db
+data/*.db-journal
+data/uploads/*
+!data/uploads/.gitkeep
+.pytest_cache/
+.coverage
+htmlcov/
+node_modules/
+playwright-report/
+test-results/
+*.log

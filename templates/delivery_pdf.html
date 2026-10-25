@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polio Lab | الاستمارات المراجعة للتسليم</title>
+    <style>{{ styles_css|safe }}</style>
+    <style>{{ form_css|safe }}</style>
+    <style>
+        html,
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+        }
+
+        .batch-print,
+        .batch-sheets {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+        }
+
+        .form-sheet {
+            margin: 0 auto !important;
+            box-shadow: none !important;
+        }
+
+        .pdf-generated-note {
+            display: none;
+        }
+
+        @media print {
+            .form-sheet .main-grid .value-row input[name="lab_number"] {
+                padding-inline: 1px !important;
+                font-size: 10px !important;
+            }
+        }
+    </style>
+</head>
+<body class="batch-print">
+    <div class="batch-sheets">
+        {% for form in forms %}
+        {% include "_sheet.html" %}
+        {% endfor %}
+    </div>
+</body>
+</html>
