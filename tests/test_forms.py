@@ -112,6 +112,40 @@ class LabFormTestCase(unittest.TestCase):
         self.assertEqual(invalid.status_code, 400)
         self.assertIn("sample1_final", invalid.get_json()["fields"])
 
+    def test_nopv2_extra_final_results_are_selectable_and_persisted(self):
+        like_result = "فيروس شلل الأطفال المروض من النوع nOPV2-Like"
+        derived_result = "فيروس شلل الأطفال المشتق من النوع nOPV2-n"
+
+        new_form_html = self.client.get("/forms/new").get_data(as_text=True)
+        self.assertIn(f'<option value="{like_result}"', new_form_html)
+        self.assertIn(f'<option value="{derived_result}"', new_form_html)
+
+        created = self.create_form(
+            lab_number="L20B-NOPV2",
+            national_id="32601159999999",
+            sample1_final=like_result,
+            sample2_final=derived_result,
+        )
+        self.assertEqual(created.status_code, 201)
+        form_id = created.get_json()["id"]
+        self.assertEqual(created.get_json()["sample1_final"], like_result)
+        self.assertEqual(created.get_json()["sample2_final"], derived_result)
+
+        page = self.client.get(f"/forms/{form_id}").get_data(as_text=True)
+        self.assertIn(f'<option value="{like_result}" selected>', page)
+        self.assertIn(f'<option value="{derived_result}" selected>', page)
+
+        updated = self.client.put(
+            f"/api/forms/{form_id}",
+            json={**VALID_FORM, "lab_number": "L20B-NOPV2", "national_id": "32601159999999", "sample1_final": derived_result, "sample2_final": like_result},
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.get_json()["sample1_final"], derived_result)
+
+        for result in (like_result, derived_result):
+            filtered = self.client.get(f"/api/forms?result={result}").get_json()
+            self.assertEqual(filtered["total"], 1)
+
     def test_create_list_filter_and_summary(self):
         response = self.create_form()
         self.assertEqual(response.status_code, 201)
