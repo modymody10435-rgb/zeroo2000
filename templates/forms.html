@@ -80,7 +80,7 @@
                         <label class="select-field">
                             <select id="filter-result" aria-label="النتيجة النهائية">
                                 <option value="">كل النتائج</option>
-                                {% for result in FORM_RESULTS %}
+                                {% for result in FINAL_RESULTS %}
                                 <option value="{{ result }}">{{ result }}</option>
                                 {% endfor %}
                             </select>
@@ -109,9 +109,17 @@
                         <article class="stat-card">
                             <div class="stat-icon teal"><svg class="icon"><use href="#icon-file"></use></svg></div>
                             <div class="stat-copy">
-                                <span>إجمالي الاستمارات</span>
+                                <label class="select-field compact summary-category">
+                                    <select id="filter-category" aria-label="فرز حسب الفئة">
+                                        <option value="">كل الفئات</option>
+                                        <option value="immunodeficiency">نقص مناعة</option>
+                                        <option value="contacts">المخالطين</option>
+                                        <option value="normal">الحالات العادية</option>
+                                    </select>
+                                </label>
+                                <span id="summary-total-label">إجمالي الاستمارات</span>
                                 <strong id="summary-total">—</strong>
-                                <small>مرفوعة على النظام</small>
+                                <small id="summary-total-note">مرفوعة على النظام</small>
                             </div>
                             <span class="stat-accent"></span>
                         </article>

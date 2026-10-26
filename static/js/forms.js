@@ -9,6 +9,7 @@
         search: "",
         governorate: "",
         result: "",
+        category: "",
         selected: new Set(),
     };
 
@@ -22,8 +23,11 @@
         search: document.getElementById("search-input"),
         governorate: document.getElementById("filter-governorate"),
         result: document.getElementById("filter-result"),
+        category: document.getElementById("filter-category"),
         reset: document.getElementById("reset-filters"),
         summaryTotal: document.getElementById("summary-total"),
+        summaryTotalLabel: document.getElementById("summary-total-label"),
+        summaryTotalNote: document.getElementById("summary-total-note"),
         summaryFinalized: document.getElementById("summary-finalized"),
         summaryPending: document.getElementById("summary-pending"),
         summaryPositive: document.getElementById("summary-positive"),
@@ -65,9 +69,8 @@
     function badgeClass(value, hasFinal) {
         if (!hasFinal) return "is-progress";
         if (value === "سلبي") return "is-negative";
-        if (value === "إيجابي") return "is-positive";
-        if (value === "قيد الإنجاز") return "is-progress";
-        return "is-muted";
+        if (value === "قيد الإنجاز" || value === "لم يتم الفحص") return "is-progress";
+        return "is-positive";
     }
 
     function rowHtml(item) {
@@ -131,7 +134,25 @@
         elements.next.disabled = state.page >= state.pages;
 
         const summary = payload.summary || {};
-        elements.summaryTotal.textContent = formatNumberAr(summary.total || 0);
+        const categoryNames = {
+            immunodeficiency: "نقص مناعة",
+            contacts: "المخالطين",
+            normal: "الحالات العادية",
+        };
+        const categoryCounts = {
+            immunodeficiency: summary.immunodeficiency || 0,
+            contacts: summary.contacts || 0,
+            normal: summary.normal || 0,
+        };
+        if (state.category && categoryNames[state.category]) {
+            elements.summaryTotalLabel.textContent = `إجمالي فئة «${categoryNames[state.category]}»`;
+            elements.summaryTotal.textContent = formatNumberAr(categoryCounts[state.category]);
+            elements.summaryTotalNote.textContent = `من إجمالي ${formatNumberAr(summary.total || 0)} استمارة`;
+        } else {
+            elements.summaryTotalLabel.textContent = "إجمالي الاستمارات";
+            elements.summaryTotal.textContent = formatNumberAr(summary.total || 0);
+            elements.summaryTotalNote.textContent = "مرفوعة على النظام";
+        }
         elements.summaryFinalized.textContent = formatNumberAr(summary.finalized || 0);
         elements.summaryPending.textContent = formatNumberAr(summary.pending || 0);
         elements.summaryPositive.textContent = formatNumberAr(summary.positive || 0);
@@ -180,6 +201,7 @@
         if (state.search) params.set("search", state.search);
         if (state.governorate) params.set("governorate", state.governorate);
         if (state.result) params.set("result", state.result);
+        if (state.category) params.set("category", state.category);
 
         try {
             const response = await fetch(`/api/forms?${params.toString()}`);
@@ -220,13 +242,21 @@
             loadForms();
         });
 
+        elements.category.addEventListener("change", (event) => {
+            state.category = event.target.value;
+            state.page = 1;
+            loadForms();
+        });
+
         elements.reset.addEventListener("click", () => {
             elements.search.value = "";
             elements.governorate.value = "";
             elements.result.value = "";
+            elements.category.value = "";
             state.search = "";
             state.governorate = "";
             state.result = "";
+            state.category = "";
             state.page = 1;
             loadForms();
         });

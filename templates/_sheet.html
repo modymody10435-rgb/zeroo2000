@@ -47,8 +47,15 @@
                         </thead>
                         <tbody>
                             <tr class="value-row">
-                                <td>
-                                    <input name="national_id" type="text" inputmode="numeric" placeholder="—" value="{{ form.national_id if form else '' }}">
+                                <td class="national-cell">
+                                    <select name="contact_number" aria-label="حالة المخالط">
+                                        <option value="">—</option>
+                                        <option value="1" {% if form and form.contact_number == '1' %}selected{% endif %}>مخالط رقم 1</option>
+                                        <option value="2" {% if form and form.contact_number == '2' %}selected{% endif %}>مخالط رقم 2</option>
+                                        <option value="3" {% if form and form.contact_number == '3' %}selected{% endif %}>مخالط رقم 3</option>
+                                        <option value="نقص مناعة" {% if form and form.contact_number == 'نقص مناعة' %}selected{% endif %}>نقص مناعة</option>
+                                    </select>
+                                    <input name="national_id" type="text" placeholder="—" value="{{ form.national_id if form else '' }}">
                                 </td>
                                 <td>
                                     <input name="lab_number" type="text" placeholder="—" value="{{ form.lab_number if form else '' }}">
@@ -125,6 +132,9 @@
                                         {% for result in FORM_RESULTS %}
                                         <option value="{{ result }}" {% if form and form.sample1_l20b == result %}selected{% endif %}>{{ result }}</option>
                                         {% endfor %}
+                                        {% if form and form.sample1_l20b and form.sample1_l20b not in FORM_RESULTS %}
+                                        <option value="{{ form.sample1_l20b }}" selected>{{ form.sample1_l20b }}</option>
+                                        {% endif %}
                                     </select>
                                 </td>
                                 <td>
@@ -133,6 +143,9 @@
                                         {% for result in FORM_RESULTS %}
                                         <option value="{{ result }}" {% if form and form.sample2_l20b == result %}selected{% endif %}>{{ result }}</option>
                                         {% endfor %}
+                                        {% if form and form.sample2_l20b and form.sample2_l20b not in FORM_RESULTS %}
+                                        <option value="{{ form.sample2_l20b }}" selected>{{ form.sample2_l20b }}</option>
+                                        {% endif %}
                                     </select>
                                 </td>
                             </tr>
@@ -144,10 +157,26 @@
                             <tr>
                                 <th scope="row" class="row-label">النتيجة النهائية</th>
                                 <td>
-                                    <input name="sample1_final" type="text" placeholder="—" value="{{ form.sample1_final if form else '' }}">
+                                    <select name="sample1_final">
+                                        <option value="">-- اختر النتيجة النهائية --</option>
+                                        {% for result in FINAL_RESULTS %}
+                                        <option value="{{ result }}" {% if form and form.sample1_final == result %}selected{% endif %}>{{ result }}</option>
+                                        {% endfor %}
+                                        {% if form and form.sample1_final and form.sample1_final not in FINAL_RESULTS %}
+                                        <option value="{{ form.sample1_final }}" selected>{{ form.sample1_final }}</option>
+                                        {% endif %}
+                                    </select>
                                 </td>
                                 <td>
-                                    <input name="sample2_final" type="text" placeholder="—" value="{{ form.sample2_final if form else '' }}">
+                                    <select name="sample2_final">
+                                        <option value="">-- اختر النتيجة النهائية --</option>
+                                        {% for result in FINAL_RESULTS %}
+                                        <option value="{{ result }}" {% if form and form.sample2_final == result %}selected{% endif %}>{{ result }}</option>
+                                        {% endfor %}
+                                        {% if form and form.sample2_final and form.sample2_final not in FINAL_RESULTS %}
+                                        <option value="{{ form.sample2_final }}" selected>{{ form.sample2_final }}</option>
+                                        {% endif %}
+                                    </select>
                                 </td>
                             </tr>
                             <tr>

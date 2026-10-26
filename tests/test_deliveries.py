@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import re
 import sqlite3
 import tempfile
 import unittest
@@ -171,6 +172,40 @@ class EbiDeliveryTestCase(unittest.TestCase):
         )
         page = self.client.get("/forms").get_data(as_text=True)
         self.assertNotIn("تسليم إلى EBI", page)
+
+    def test_delivery_page_shows_eligible_category_cards(self):
+        self.create_reviewed_form(
+            lab_number="L20B-CAT-A", national_id="42601151234567", contact_number="نقص مناعة"
+        )
+        self.create_reviewed_form(
+            lab_number="L20B-CAT-B", national_id="42601151234568", contact_number="1"
+        )
+        self.create_reviewed_form(
+            lab_number="L20B-CAT-C", national_id="42601151234569", contact_number="3"
+        )
+        self.create_reviewed_form(
+            lab_number="L20B-CAT-D", national_id="42601151234570", contact_number=""
+        )
+        self.create_form(
+            lab_number="L20B-CAT-E", national_id="42601151234571", contact_number="نقص مناعة"
+        )
+
+        page = self.client.get("/deliveries").get_data(as_text=True)
+        self.assertNotIn("عمليات فاشلة", page)
+        self.assertIn("نقص المناعة", page)
+        self.assertIn("المخالطين", page)
+        self.assertIn("الحالات العادية", page)
+
+        counts = {}
+        for name in ("نقص المناعة", "المخالطين", "الحالات العادية"):
+            match = re.search(
+                rf"<strong>(\d+)</strong><small>{name}</small>", page
+            )
+            self.assertIsNotNone(match, f"لم يتم العثور على بطاقة {name}")
+            counts[name] = int(match.group(1))
+        self.assertEqual(counts["نقص المناعة"], 1)
+        self.assertEqual(counts["المخالطين"], 2)
+        self.assertEqual(counts["الحالات العادية"], 1)
 
     def test_only_fully_reviewed_forms_are_listed(self):
         reviewed_id = self.create_reviewed_form()

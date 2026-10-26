@@ -88,21 +88,29 @@ class LabFormTestCase(unittest.TestCase):
         self.assertNotIn('name="reviewed_at"', new_form_html)
         self.assertEqual(self.client.get("/forms/9999").status_code, 404)
 
-    def test_final_results_are_free_text_inputs(self):
+    def test_final_results_are_dropdown_selects(self):
+        chosen = "فيروس شلل الأطفال المشتق من النوع الثالث"
         created = self.create_form(
-            sample1_final="نتيجة مخصصة للعينة الأولى",
-            sample2_final="إيجابي WPV3",
+            sample1_final=chosen,
+            sample2_final="سلبي",
         )
         self.assertEqual(created.status_code, 201)
         form_id = created.get_json()["id"]
 
         page = self.client.get(f"/forms/{form_id}").get_data(as_text=True)
-        self.assertIn('<input name="sample1_final" type="text"', page)
-        self.assertIn('<input name="sample2_final" type="text"', page)
-        self.assertNotIn('<select name="sample1_final"', page)
-        self.assertNotIn('<select name="sample2_final"', page)
-        self.assertIn("نتيجة مخصصة للعينة الأولى", page)
-        self.assertIn("إيجابي WPV3", page)
+        self.assertIn('<select name="sample1_final"', page)
+        self.assertIn('<select name="sample2_final"', page)
+        self.assertNotIn('<input name="sample1_final" type="text"', page)
+        self.assertNotIn('<input name="sample2_final" type="text"', page)
+        self.assertIn("-- اختر النتيجة النهائية --", page)
+        self.assertIn(f'<option value="{chosen}" selected>', page)
+
+        invalid = self.create_form(
+            lab_number="L20B-BAD-FINAL",
+            sample1_final="نتيجة غير معتمدة",
+        )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn("sample1_final", invalid.get_json()["fields"])
 
     def test_create_list_filter_and_summary(self):
         response = self.create_form()
@@ -119,16 +127,62 @@ class LabFormTestCase(unittest.TestCase):
         self.assertEqual(listing["summary"]["finalized"], 1)
         self.assertEqual(listing["summary"]["pending"], 0)
 
-        filtered = self.client.get("/api/forms?result=إيجابي").get_json()
+        filtered = self.client.get("/api/forms?result=سلبي").get_json()
+        self.assertEqual(filtered["total"], 1)
+        filtered = self.client.get(
+            "/api/forms?result=فيروس شلل الأطفال المروض من النوع الأول"
+        ).get_json()
         self.assertEqual(filtered["total"], 0)
-
         searched = self.client.get("/api/forms?search=L20B-0001").get_json()
         self.assertEqual(searched["total"], 1)
 
         self.assertEqual(self.client.get(f"/forms/{created['id']}").status_code, 200)
 
-    def test_national_id_accepts_variable_numeric_lengths(self):
-        for index, national_id in enumerate(("1", "123", "1234567890123")):
+    def test_contact_category_filter_and_summary(self):
+        self.create_form(
+            lab_number="L20B-CAT-1",
+            national_id="11111111111111",
+            contact_number="نقص مناعة",
+        )
+        self.create_form(
+            lab_number="L20B-CAT-2",
+            national_id="22222222222222",
+            contact_number="1",
+        )
+        self.create_form(
+            lab_number="L20B-CAT-3",
+            national_id="33333333333333",
+            contact_number="3",
+        )
+        self.create_form(
+            lab_number="L20B-CAT-4",
+            national_id="44444444444444",
+            contact_number="",
+        )
+
+        listing = self.client.get("/api/forms").get_json()
+        summary = listing["summary"]
+        self.assertEqual(summary["immunodeficiency"], 1)
+        self.assertEqual(summary["contacts"], 2)
+        self.assertEqual(summary["normal"], 1)
+
+        self.assertEqual(
+            self.client.get("/api/forms?category=immunodeficiency").get_json()["total"], 1
+        )
+        self.assertEqual(self.client.get("/api/forms?category=contacts").get_json()["total"], 2)
+        self.assertEqual(self.client.get("/api/forms?category=normal").get_json()["total"], 1)
+        self.assertEqual(self.client.get("/api/forms").get_json()["total"], 4)
+
+        invalid = self.create_form(
+            lab_number="L20B-CAT-BAD",
+            national_id="55555555555555",
+            contact_number="قيمة غير صحيحة",
+        )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn("contact_number", invalid.get_json()["fields"])
+
+    def test_national_id_accepts_letters_and_numbers(self):
+        for index, national_id in enumerate(("1", "123", "12A456", "ABC1234567890")):
             response = self.create_form(
                 national_id=national_id,
                 lab_number=f"L20B-NID-{index}",
@@ -136,14 +190,31 @@ class LabFormTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.get_json()["national_id"], national_id)
 
-        non_numeric = self.create_form(
-            national_id="12A", lab_number="L20B-NID-INVALID"
+        invalid = self.create_form(
+            national_id="12 A", lab_number="L20B-NID-INVALID"
         )
-        self.assertEqual(non_numeric.status_code, 400)
-        self.assertIn("national_id", non_numeric.get_json()["fields"])
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn("national_id", invalid.get_json()["fields"])
+
+    def test_national_id_is_optional_when_contact_selected(self):
+        for index, contact in enumerate(("1", "2", "3", "نقص مناعة")):
+            response = self.create_form(
+                national_id="",
+                contact_number=contact,
+                lab_number=f"L20B-NOID-{index}",
+            )
+            self.assertEqual(response.status_code, 201)
+            self.assertEqual(response.get_json()["national_id"], "")
+            self.assertEqual(response.get_json()["contact_number"], contact)
+
+        missing_both = self.create_form(
+            national_id="", contact_number="", lab_number="L20B-NOID-BOTH"
+        )
+        self.assertEqual(missing_both.status_code, 400)
+        self.assertIn("national_id", missing_both.get_json()["fields"])
 
     def test_validation_and_duplicate_lab_number(self):
-        invalid = self.create_form(national_id="12A", lab_number="")
+        invalid = self.create_form(national_id="12 A", lab_number="")
         self.assertEqual(invalid.status_code, 400)
         fields = invalid.get_json()["fields"]
         self.assertIn("national_id", fields)
@@ -162,11 +233,11 @@ class LabFormTestCase(unittest.TestCase):
         form_id = self.create_form().get_json()["id"]
         updated = self.client.put(
             f"/api/forms/{form_id}",
-            json={**VALID_FORM, "patient_name": "مريض محدث", "sample1_final": "إيجابي"},
+            json={**VALID_FORM, "patient_name": "مريض محدث", "sample1_final": "فيروس شلل الأطفال المروض من النوع الثاني"},
         )
         self.assertEqual(updated.status_code, 200)
         self.assertEqual(updated.get_json()["patient_name"], "مريض محدث")
-        self.assertEqual(updated.get_json()["sample1_final"], "إيجابي")
+        self.assertEqual(updated.get_json()["sample1_final"], "فيروس شلل الأطفال المروض من النوع الثاني")
 
         self.assertEqual(self.client.delete(f"/api/forms/{form_id}").status_code, 204)
         self.assertEqual(self.client.get(f"/api/forms/{form_id}").status_code, 404)

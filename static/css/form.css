@@ -407,6 +407,12 @@
     padding: 6px 5px;
 }
 
+.main-grid .national-cell select {
+    display: block;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
 .col-national { width: 13%; }
 .col-lab { width: 10%; }
 .col-name { width: 21%; }
@@ -1055,6 +1061,36 @@
 
     .main-grid .value-row td {
         padding: 3px 5px;
+    }
+
+    .main-grid .value-row td.national-cell {
+        height: auto;
+    }
+
+    .main-grid .national-cell select {
+        display: block;
+        width: 100%;
+        margin: 0 0 2px !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        line-height: 1.4 !important;
+        padding: 0 2px !important;
+        height: auto !important;
+        min-height: 0 !important;
+        text-align: center;
+        text-align-last: center;
+    }
+
+    .main-grid .national-cell input {
+        display: block;
+        width: 100%;
     }
 
     .samples-grid tbody tr {

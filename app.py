@@ -69,7 +69,26 @@ GOVERNORATES = [
     "مطروح",
 ]
 
-FORM_RESULTS = ["سلبي", "إيجابي", "قيد الإنجاز", "لم يتم الفحص"]
+FORM_RESULTS = ["سلبي", "إيجابي", "قيد الانتظار", "لم يتم الفحص"]
+CONTACT_OPTIONS = ["1", "2", "3", "نقص مناعة"]
+CONTACT_LABELS = {
+    "1": "مخالط رقم 1",
+    "2": "مخالط رقم 2",
+    "3": "مخالط رقم 3",
+    "نقص مناعة": "نقص مناعة",
+}
+FINAL_RESULTS = [
+    "سلبي",
+    "فيروس معوي آخر غير شلل الأطفال",
+    "فيروس شلل الأطفال المروض من النوع الأول",
+    "فيروس شلل الأطفال المروض من النوع الثاني",
+    "فيروس شلل الأطفال المروض من النوع الثالث",
+    "فيروس شلل الأطفال المشتق من النوع الأول",
+    "فيروس شلل الأطفال المشتق من النوع الثاني",
+    "فيروس شلل الأطفال المشتق من النوع الثالث",
+    "فيروس شلل الأطفال المروض من النوع nOPV2",
+    "فيروس شلل الأطفال المشتق من النوع nOPV2",
+]
 FORM_CONDITIONS = ["جيدة"]
 FORM_POSITIONS = {"left": "يسار", "center": "وسط", "right": "يمين"}
 REVIEW_STAGES = {
@@ -90,6 +109,7 @@ DELIVERY_PDF_LOCK = threading.Lock()
 
 LAB_FORM_FIELDS = [
     "national_id",
+    "contact_number",
     "lab_number",
     "patient_name",
     "age_months",
@@ -173,7 +193,7 @@ DEMO_FORMS = [
         "sample_condition": "جيدة",
         "sample1_collect_date": "2026-10-04",
         "sample1_receive_date": "2026-10-05",
-        "sample1_l20b": "قيد الإنجاز",
+        "sample1_l20b": "",
         "sample1_prelim_date": "",
         "sample1_final": "",
         "sample1_final_date": "",
@@ -221,6 +241,10 @@ def init_db():
     form_columns = {
         row["name"] for row in db.execute("PRAGMA table_info(lab_forms)").fetchall()
     }
+    if "contact_number" not in form_columns:
+        db.execute(
+            "ALTER TABLE lab_forms ADD COLUMN contact_number TEXT NOT NULL DEFAULT ''"
+        )
     if "created_by" not in form_columns:
         db.execute(
             "ALTER TABLE lab_forms ADD COLUMN created_by TEXT NOT NULL DEFAULT ''"
@@ -704,6 +728,20 @@ def fetch_ebi_eligible_forms(db):
 
 class DeliveryPdfError(Exception):
     pass
+
+
+def eligible_category_counts(forms):
+    """يصنّف الاستمارات الجاهزة للتسليم إلى فئات الحالة: نقص مناعة / مخالطين / حالات عادية."""
+    counts = {"immunodeficiency": 0, "contacts": 0, "normal": 0}
+    for form in forms:
+        contact = clean_text(form["contact_number"])
+        if contact == "نقص مناعة":
+            counts["immunodeficiency"] += 1
+        elif contact in ("1", "2", "3"):
+            counts["contacts"] += 1
+        else:
+            counts["normal"] += 1
+    return counts
 
 
 def delivery_pdf_dir():
@@ -1617,10 +1655,17 @@ def validate_lab_form(payload, form_id=None, existing=None):
     values = {field: clean_text(payload.get(field)) for field in LAB_FORM_FIELDS}
     errors = {}
 
+    if values["contact_number"] and values["contact_number"] not in CONTACT_OPTIONS:
+        errors["contact_number"] = "يرجى اختيار قيمة صحيحة لحالة المخالط"
+
+    # الرقم القومي يصبح اختيارياً عند اختيار فئة من قائمة المخالطين فوق الحقل.
     if not values["national_id"]:
-        errors["national_id"] = "الرقم القومي مطلوب"
-    elif not values["national_id"].isdigit():
-        errors["national_id"] = "الرقم القومي يجب أن يحتوي على أرقام فقط"
+        if not values["contact_number"]:
+            errors["national_id"] = "الرقم القومي مطلوب"
+    elif len(values["national_id"]) > 60:
+        errors["national_id"] = "الرقم القومي أطول من الحد المسموح"
+    elif not re.fullmatch(r"[A-Za-z0-9]+", values["national_id"]):
+        errors["national_id"] = "الرقم القومي يجب أن يحتوي على حروف أو أرقام فقط"
 
     if not values["lab_number"]:
         errors["lab_number"] = "الرقم المعملي مطلوب"
@@ -1651,13 +1696,15 @@ def validate_lab_form(payload, form_id=None, existing=None):
         if parsed > date.today():
             errors[field] = "لا يمكن أن يكون التاريخ في المستقبل"
 
+    # "قيد الإنجاز" قيمة قديمة محفوظة في بيانات سابقة، تُقبل عند التعديل ولا تظهر في القائمة.
+    legacy_l20b_results = ("قيد الإنجاز",)
     for field in ("sample1_l20b", "sample2_l20b"):
-        if values[field] and values[field] not in FORM_RESULTS:
+        if values[field] and values[field] not in FORM_RESULTS and values[field] not in legacy_l20b_results:
             errors[field] = "قيمة النتيجة غير صحيحة"
 
     for field in ("sample1_final", "sample2_final"):
-        if len(values[field]) > 120:
-            errors[field] = "النتيجة النهائية طويلة جدًا"
+        if values[field] and values[field] not in FINAL_RESULTS:
+            errors[field] = "يرجى اختيار النتيجة النهائية من القائمة"
 
     if not values["sample_condition"]:
         values["sample_condition"] = FORM_CONDITIONS[0]
@@ -1740,9 +1787,17 @@ def build_lab_form_filters(args):
         params.append(governorate)
 
     result = clean_text(args.get("result"))
-    if result in FORM_RESULTS:
+    if result in FINAL_RESULTS:
         clauses.append("(sample1_final = ? OR sample2_final = ?)")
         params.extend([result, result])
+
+    category = clean_text(args.get("category"))
+    if category == "immunodeficiency":
+        clauses.append("contact_number = 'نقص مناعة'")
+    elif category == "contacts":
+        clauses.append("contact_number IN ('1', '2', '3')")
+    elif category == "normal":
+        clauses.append("contact_number = ''")
 
     where = ""
     if clauses:
@@ -1992,7 +2047,18 @@ def lab_form_summary(db):
             "SELECT COUNT(*) AS c FROM lab_forms WHERE sample1_final = '' AND sample2_final = ''"
         ).fetchone()["c"],
         "positive": db.execute(
-            "SELECT COUNT(*) AS c FROM lab_forms WHERE sample1_final = 'إيجابي' OR sample2_final = 'إيجابي'"
+            """SELECT COUNT(*) AS c FROM lab_forms
+               WHERE (sample1_final <> '' AND sample1_final <> 'سلبي')
+                  OR (sample2_final <> '' AND sample2_final <> 'سلبي')"""
+        ).fetchone()["c"],
+        "immunodeficiency": db.execute(
+            "SELECT COUNT(*) AS c FROM lab_forms WHERE contact_number = 'نقص مناعة'"
+        ).fetchone()["c"],
+        "contacts": db.execute(
+            "SELECT COUNT(*) AS c FROM lab_forms WHERE contact_number IN ('1', '2', '3')"
+        ).fetchone()["c"],
+        "normal": db.execute(
+            "SELECT COUNT(*) AS c FROM lab_forms WHERE contact_number = ''"
         ).fetchone()["c"],
     }
 
@@ -2486,9 +2552,7 @@ def ebi_deliveries_page():
         "deliveries": db.execute(
             "SELECT COUNT(*) AS count FROM ebi_deliveries"
         ).fetchone()["count"],
-        "failed": db.execute(
-            "SELECT COUNT(*) AS count FROM ebi_deliveries WHERE status = 'failed'"
-        ).fetchone()["count"],
+        **eligible_category_counts(eligible_forms),
     }
     values = {
         "recipient_name": "",
@@ -2597,10 +2661,7 @@ def ebi_delivery_submit():
             "deliveries": db.execute(
                 "SELECT COUNT(*) AS count FROM ebi_deliveries"
             ).fetchone()["count"],
-            "failed": db.execute(
-                "SELECT COUNT(*) AS count FROM ebi_deliveries "
-                "WHERE status = 'failed'"
-            ).fetchone()["count"],
+            **eligible_category_counts(eligible_forms),
         }
         return (
             render_template(
@@ -2785,6 +2846,7 @@ def create_app(test_config=None):
         user = current_session_user()
         return {
             "FORM_RESULTS": FORM_RESULTS,
+            "FINAL_RESULTS": FINAL_RESULTS,
             "FORM_CONDITIONS": FORM_CONDITIONS,
             "FORM_POSITIONS": FORM_POSITIONS,
             "GOVERNORATES": GOVERNORATES,
@@ -2819,7 +2881,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
     app.run(
-        host=os.environ.get("HOST", "127.0.0.1"),
+        host=os.environ.get("HOST", "0.0.0.0"),
         port=port,
         debug=os.environ.get("FLASK_DEBUG") == "1",
     )

@@ -4,7 +4,7 @@
 
 .delivery-stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 14px;
 }
@@ -45,6 +45,11 @@
     color: var(--red);
 }
 
+.delivery-stat-icon.is-contacts {
+    background: rgba(63, 127, 228, 0.1);
+    color: var(--blue);
+}
+
 .delivery-stat-icon .icon {
     width: 19px;
     height: 19px;
@@ -61,6 +66,14 @@
 .delivery-stat small {
     color: var(--muted);
     font-size: 10.5px;
+}
+
+.delivery-stat-note {
+    display: block;
+    color: var(--muted);
+    font-size: 9px;
+    font-style: normal;
+    opacity: 0.8;
 }
 
 .delivery-api-state {

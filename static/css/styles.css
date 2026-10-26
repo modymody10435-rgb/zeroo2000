@@ -1023,6 +1023,18 @@ svg {
     cursor: pointer;
 }
 
+.summary-category {
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.summary-category select {
+    height: 30px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #ffffff;
+}
+
 .search-field input::placeholder {
     color: #9aadaf;
 }

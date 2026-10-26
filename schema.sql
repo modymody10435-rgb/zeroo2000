@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS lab_forms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     national_id TEXT NOT NULL DEFAULT '',
+    contact_number TEXT NOT NULL DEFAULT '',
     lab_number TEXT NOT NULL DEFAULT '',
     patient_name TEXT NOT NULL DEFAULT '',
     age_months TEXT NOT NULL DEFAULT '',

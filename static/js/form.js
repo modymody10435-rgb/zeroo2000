@@ -240,6 +240,60 @@
         applyImage(kind, "");
     }
 
+    function datePartsOf(group) {
+        return Array.from(group.querySelectorAll(".date-part"));
+    }
+
+    function nextDatePart(field) {
+        const group = field.closest(".date-field");
+        const parts = datePartsOf(group);
+        const index = parts.indexOf(field);
+        if (index > -1 && parts[index + 1]) return parts[index + 1];
+        const groups = Array.from(elements.form.querySelectorAll(".date-field"));
+        const groupIndex = groups.indexOf(group);
+        for (let i = groupIndex + 1; i < groups.length; i += 1) {
+            const first = datePartsOf(groups[i])[0];
+            if (first) return first;
+        }
+        return null;
+    }
+
+    function handleDatePartInput(event) {
+        const field = event.target;
+        if (!field.classList || !field.classList.contains("date-part")) return;
+        const max = field.maxLength > 0 ? field.maxLength : 4;
+        const cleaned = field.value.replace(/\D/g, "").slice(0, max);
+        if (cleaned !== field.value) field.value = cleaned;
+        if (cleaned.length < max) return;
+        const next = nextDatePart(field);
+        if (next) {
+            next.focus();
+            next.select();
+        }
+    }
+
+    function handleDatePartKeydown(event) {
+        const field = event.target;
+        if (!field.classList || !field.classList.contains("date-part")) return;
+        if (event.key === "Enter") {
+            const next = nextDatePart(field);
+            if (next) {
+                event.preventDefault();
+                next.focus();
+                next.select();
+            }
+            return;
+        }
+        if (event.key !== "Backspace" || field.value) return;
+        const parts = datePartsOf(field.closest(".date-field"));
+        const index = parts.indexOf(field);
+        if (index > 0 && parts[index - 1]) {
+            event.preventDefault();
+            parts[index - 1].focus();
+            parts[index - 1].select();
+        }
+    }
+
     function syncDateGroups() {
         elements.form.querySelectorAll(".date-field").forEach((group) => {
             const day = group.querySelector('[name$="_day"]');
@@ -291,6 +345,8 @@
 
         elements.form.addEventListener("input", syncDateGroups);
         elements.form.addEventListener("change", syncDateGroups);
+        elements.form.addEventListener("input", handleDatePartInput);
+        elements.form.addEventListener("keydown", handleDatePartKeydown);
         window.addEventListener("beforeprint", syncDateGroups);
 
         document.addEventListener("keydown", (event) => {
