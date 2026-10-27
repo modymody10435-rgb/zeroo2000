@@ -88,7 +88,7 @@ class LabFormTestCase(unittest.TestCase):
         self.assertNotIn('name="reviewed_at"', new_form_html)
         self.assertEqual(self.client.get("/forms/9999").status_code, 404)
 
-    def test_final_results_are_dropdown_selects(self):
+    def test_final_results_are_editable_with_suggestions(self):
         chosen = "فيروس شلل الأطفال المشتق من النوع الثالث"
         created = self.create_form(
             sample1_final=chosen,
@@ -98,19 +98,29 @@ class LabFormTestCase(unittest.TestCase):
         form_id = created.get_json()["id"]
 
         page = self.client.get(f"/forms/{form_id}").get_data(as_text=True)
-        self.assertIn('<select name="sample1_final"', page)
-        self.assertIn('<select name="sample2_final"', page)
-        self.assertNotIn('<input name="sample1_final" type="text"', page)
-        self.assertNotIn('<input name="sample2_final" type="text"', page)
-        self.assertIn("-- اختر النتيجة النهائية --", page)
-        self.assertIn(f'<option value="{chosen}" selected>', page)
+        self.assertIn('<input class="final-result-input" name="sample1_final" type="text"', page)
+        self.assertIn('<input class="final-result-input" name="sample2_final" type="text"', page)
+        self.assertNotIn('<select name="sample1_final"', page)
+        self.assertNotIn('<select name="sample2_final"', page)
+        self.assertIn(f'list="final-results-{form_id}"', page)
+        self.assertIn(f'<datalist id="final-results-{form_id}"', page)
+        self.assertIn(f'<option value="{chosen}"></option>', page)
+        self.assertIn('value="سلبي"', page)
 
-        invalid = self.create_form(
-            lab_number="L20B-BAD-FINAL",
-            sample1_final="نتيجة غير معتمدة",
+        manual_result = "نتيجة يدوية مخصصة"
+        manual = self.create_form(
+            lab_number="L20B-CUSTOM-FINAL",
+            sample1_final=manual_result,
         )
-        self.assertEqual(invalid.status_code, 400)
-        self.assertIn("sample1_final", invalid.get_json()["fields"])
+        self.assertEqual(manual.status_code, 201)
+        self.assertEqual(manual.get_json()["sample1_final"], manual_result)
+
+        too_long = self.create_form(
+            lab_number="L20B-LONG-FINAL",
+            sample1_final="ن" * 121,
+        )
+        self.assertEqual(too_long.status_code, 400)
+        self.assertIn("sample1_final", too_long.get_json()["fields"])
 
     def test_nopv2_extra_final_results_are_selectable_and_persisted(self):
         like_result = "فيروس شلل الأطفال المروض من النوع nOPV2-Like"
@@ -132,8 +142,9 @@ class LabFormTestCase(unittest.TestCase):
         self.assertEqual(created.get_json()["sample2_final"], derived_result)
 
         page = self.client.get(f"/forms/{form_id}").get_data(as_text=True)
-        self.assertIn(f'<option value="{like_result}" selected>', page)
-        self.assertIn(f'<option value="{derived_result}" selected>', page)
+        self.assertIn(f'name="sample1_final" type="text"', page)
+        self.assertIn(f'value="{like_result}"', page)
+        self.assertIn(f'value="{derived_result}"', page)
 
         updated = self.client.put(
             f"/api/forms/{form_id}",

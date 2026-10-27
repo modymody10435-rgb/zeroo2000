@@ -157,26 +157,10 @@
                             <tr>
                                 <th scope="row" class="row-label">النتيجة النهائية</th>
                                 <td>
-                                    <select name="sample1_final">
-                                        <option value="">-- اختر النتيجة النهائية --</option>
-                                        {% for result in FINAL_RESULTS %}
-                                        <option value="{{ result }}" {% if form and form.sample1_final == result %}selected{% endif %}>{{ result }}</option>
-                                        {% endfor %}
-                                        {% if form and form.sample1_final and form.sample1_final not in FINAL_RESULTS %}
-                                        <option value="{{ form.sample1_final }}" selected>{{ form.sample1_final }}</option>
-                                        {% endif %}
-                                    </select>
+                                    <input class="final-result-input" name="sample1_final" type="text" list="final-results-{{ form.id if form else 'new' }}" placeholder="اكتب أو اختر النتيجة" value="{{ form.sample1_final if form else '' }}">
                                 </td>
                                 <td>
-                                    <select name="sample2_final">
-                                        <option value="">-- اختر النتيجة النهائية --</option>
-                                        {% for result in FINAL_RESULTS %}
-                                        <option value="{{ result }}" {% if form and form.sample2_final == result %}selected{% endif %}>{{ result }}</option>
-                                        {% endfor %}
-                                        {% if form and form.sample2_final and form.sample2_final not in FINAL_RESULTS %}
-                                        <option value="{{ form.sample2_final }}" selected>{{ form.sample2_final }}</option>
-                                        {% endif %}
-                                    </select>
+                                    <input class="final-result-input" name="sample2_final" type="text" list="final-results-{{ form.id if form else 'new' }}" placeholder="اكتب أو اختر النتيجة" value="{{ form.sample2_final if form else '' }}">
                                 </td>
                             </tr>
                             <tr>
@@ -212,4 +196,9 @@
                             </div>
                         </div>
                     </footer>
+                    <datalist id="final-results-{{ form.id if form else 'new' }}">
+                        {% for result in FINAL_RESULTS %}
+                        <option value="{{ result }}"></option>
+                        {% endfor %}
+                    </datalist>
                 </form>

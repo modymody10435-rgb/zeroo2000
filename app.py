@@ -1703,9 +1703,10 @@ def validate_lab_form(payload, form_id=None, existing=None):
         if values[field] and values[field] not in FORM_RESULTS and values[field] not in legacy_l20b_results:
             errors[field] = "قيمة النتيجة غير صحيحة"
 
+    # النتيجة النهائية حقل مدمج: يقبل الاختيار من الاقتراحات أو الكتابة اليدوية الحرة.
     for field in ("sample1_final", "sample2_final"):
-        if values[field] and values[field] not in FINAL_RESULTS:
-            errors[field] = "يرجى اختيار النتيجة النهائية من القائمة"
+        if len(values[field]) > 120:
+            errors[field] = "النتيجة النهائية أطول من الحد المسموح"
 
     if not values["sample_condition"]:
         values["sample_condition"] = FORM_CONDITIONS[0]

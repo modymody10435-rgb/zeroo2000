@@ -472,6 +472,10 @@
     padding-inline: 8px 20px;
 }
 
+.form-sheet .final-result-input {
+    text-align: center;
+}
+
 .age-cell {
     padding: 0;
 }
