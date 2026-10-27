@@ -113,8 +113,8 @@ class LabFormTestCase(unittest.TestCase):
         self.assertIn("sample1_final", invalid.get_json()["fields"])
 
     def test_nopv2_extra_final_results_are_selectable_and_persisted(self):
-        like_result = "nOPV2-Like فيروس شلل الأطفال المروض من النوع"
-        derived_result = "nOPV2-n فيروس شلل الأطفال المشتق من النوع"
+        like_result = "فيروس شلل الأطفال المروض من النوع nOPV2-Like"
+        derived_result = "فيروس شلل الأطفال المشتق من النوع VDPV2-n"
 
         new_form_html = self.client.get("/forms/new").get_data(as_text=True)
         self.assertIn(f'<option value="{like_result}"', new_form_html)
