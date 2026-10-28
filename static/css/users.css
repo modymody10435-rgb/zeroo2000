@@ -366,6 +366,12 @@
     color: #9a6a11;
 }
 
+.users-role.is-moh {
+    border-color: rgba(28, 122, 108, 0.24);
+    background: rgba(28, 122, 108, 0.1);
+    color: #186f62;
+}
+
 .users-date {
     color: var(--muted);
     font-size: 11px;

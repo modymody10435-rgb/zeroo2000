@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | التسليم للمدير</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
+</head>
+<body class="users-page deliveries-page">
+    {% set active_nav = 'deliveries' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>التسليم</span>
+                    <h2>التسليم للمدير</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>مدير النظام</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">التسليم</span>
+                            <h2>تسليم الاستمارات للمدير</h2>
+                            <p>اختر الاستمارات المكتملة المراجعة الأولى والثانية لتسليمها إلى {{ target }}، وسيُوثّق تاريخ ووقت العملية تلقائياً.</p>
+                        </div>
+                    </div>
+
+                    {% if handover_error %}
+                    <div class="users-notices">
+                        <div class="form-alert" role="alert">
+                            <svg class="icon"><use href="#icon-alert"></use></svg>
+                            <span>
+                                {% if handover_error == 'missing' %}
+                                يرجى تحديد استمارة واحدة على الأقل للتسليم إلى {{ target }}.
+                                {% else %}
+                                بعض الاستمارات المحددة لم تعد متاحة للتسليم. يرجى إعادة التحديد.
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if done_handover %}
+                    <div class="users-notices">
+                        <div class="form-alert form-alert--success" role="status">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                            <span>
+                                تم تسليم <strong>{{ done_handover.form_count }}</strong> استمارة إلى {{ done_handover.recipient_name }} بنجاح.
+                                المرجع: <strong dir="ltr">{{ done_handover.reference }}</strong>،
+                                وتوقيت العملية: {{ done_handover.created_at|datetime_ar }}.
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="delivery-stats">
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-ready"><svg class="icon"><use href="#icon-file"></use></svg></span>
+                            <div><strong>{{ stats.eligible }}</strong><small>جاهزة للتسليم</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-sent"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                            <div><strong>{{ stats.handed }}</strong><small>تم تسليمها إلى {{ target }}</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-history"><svg class="icon"><use href="#icon-handover"></use></svg></span>
+                            <div><strong>{{ stats.handovers }}</strong><small>عمليات التسليم</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-failed"><svg class="icon"><use href="#icon-alert"></use></svg></span>
+                            <div><strong>{{ stats.immunodeficiency }}</strong><small>نقص المناعة</small><em class="delivery-stat-note">في الملف الجاهز</em></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-contacts"><svg class="icon"><use href="#icon-users"></use></svg></span>
+                            <div><strong>{{ stats.contacts }}</strong><small>المخالطين</small><em class="delivery-stat-note">في الملف الجاهز</em></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon"><svg class="icon"><use href="#icon-file"></use></svg></span>
+                            <div><strong>{{ stats.normal }}</strong><small>AFB</small><em class="delivery-stat-note">في الملف الجاهز</em></div>
+                        </article>
+                    </div>
+
+                    <form class="delivery-form" id="handover-form" method="post" action="{{ url_for('main.handover_submit') }}" novalidate>
+                        <fieldset class="delivery-fieldset">
+                            <legend>بيانات التسليم</legend>
+
+                            {% if errors %}
+                            <div class="form-alert" role="alert">
+                                <svg class="icon"><use href="#icon-alert"></use></svg>
+                                <span>يرجى تصحيح الحقول المحددة أدناه قبل التسليم.</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-grid delivery-form-grid">
+                                <div class="form-field span-two">
+                                    <label for="handover-recipient">المستلم</label>
+                                    <input id="handover-recipient" type="text" value="{{ target }}" readonly>
+                                </div>
+
+                                <div class="form-field span-two{{ ' has-error' if errors.notes }}">
+                                    <label for="handover-notes">ملاحظات التسليم</label>
+                                    <textarea
+                                        id="handover-notes"
+                                        name="notes"
+                                        maxlength="2000"
+                                        placeholder="ملاحظات اختيارية عن عملية التسليم"
+                                    >{{ values.notes }}</textarea>
+                                    <span class="field-error">{{ errors.notes or '' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="delivery-auto-audit">
+                                <svg class="icon"><use href="#icon-clock"></use></svg>
+                                <span>سيتم توثيق تاريخ ووقت العملية تلقائيًا عند حفظ التسليم.</span>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="delivery-fieldset delivery-forms-fieldset">
+                            <legend>الاستمارات المراجعة الجاهزة</legend>
+                            {% if eligible_forms %}
+                            <div class="delivery-table-hint">
+                                <span>تنتقل الاستمارات إلى هنا تلقائياً بعد اكتمال المراجعتين. اختر ما تريد تسليمه إلى {{ target }}.</span>
+                                <label class="delivery-select-all">
+                                    <input id="select-all-handover" type="checkbox">
+                                    <span>تحديد الكل</span>
+                                </label>
+                            </div>
+                            <div class="table-wrap users-table-wrap">
+                                <table class="users-table delivery-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" class="delivery-select-heading"></th>
+                                            <th scope="col">الاستمارة</th>
+                                            <th scope="col">المريض</th>
+                                            <th scope="col">المحافظة</th>
+                                            <th scope="col">المراجعة الأولى</th>
+                                            <th scope="col">المراجعة الثانية</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for form in eligible_forms %}
+                                        <tr>
+                                            <td class="delivery-select-cell">
+                                                <input
+                                                    class="delivery-form-checkbox"
+                                                    type="checkbox"
+                                                    name="form_ids"
+                                                    value="{{ form.id }}"
+                                                    aria-label="تحديد الاستمارة #{{ form.id }}"
+                                                    {% if form.id in values.form_ids %}checked{% endif %}
+                                                >
+                                            </td>
+                                            <td>
+                                                <div class="reviews-form-id">
+                                                    <strong dir="ltr">#{{ form.id }}</strong>
+                                                    <span dir="auto">{{ form.lab_number }}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{ form.patient_name }}</td>
+                                            <td>{{ form.governorate or '—' }}</td>
+                                            <td>
+                                                <span class="delivery-reviewer">{{ form.first_reviewer_name }}</span>
+                                                <small class="delivery-review-time">{{ form.first_reviewed_at|datetime_ar }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="delivery-reviewer">{{ form.second_reviewer_name }}</span>
+                                                <small class="delivery-review-time">{{ form.second_reviewed_at|datetime_ar }}</small>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="delivery-empty">
+                                <span class="delivery-empty-icon"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                                <div>
+                                    <strong>لا توجد استمارات جاهزة للتسليم حالياً.</strong>
+                                    <span>تظهر هنا الاستمارات المكتملة المراجعة الأولى والثانية ولم تُسلَّم إلى {{ target }} بعد.</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="delivery-form-actions">
+                                <span class="delivery-selected-count{{ ' has-error' if errors.form_ids }}">
+                                    <span>الاستمارات المحددة:</span> <strong id="handover-selected-count">0</strong>
+                                    <span class="field-error" id="handover-selected-error" aria-live="polite">{{ errors.form_ids or '' }}</span>
+                                </span>
+                                <button class="button button-primary" type="submit"{% if not eligible_forms %} disabled{% endif %}>
+                                    <svg class="icon"><use href="#icon-handover"></use></svg>
+                                    <span>تسليم ل{{ target }}</span>
+                                </button>
+                            </div>
+                        </fieldset>
+                    </form>
+
+                    <div class="delivery-history">
+                        <div class="delivery-section-heading">
+                            <div>
+                                <span class="section-kicker">السجل</span>
+                                <h3>عمليات التسليم السابقة</h3>
+                            </div>
+                            <span class="delivery-history-count">آخر {{ history|length }} عملية</span>
+                        </div>
+
+                        <div class="table-wrap users-table-wrap">
+                            <table class="users-table delivery-history-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">المرجع</th>
+                                        <th scope="col">المستلم</th>
+                                        <th scope="col">الاستمارات</th>
+                                        <th scope="col">سلّمها</th>
+                                        <th scope="col">توقيت العملية</th>
+                                        <th scope="col">ملاحظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for handover in history %}
+                                    <tr>
+                                        <td><strong class="delivery-reference" dir="ltr">{{ handover.reference }}</strong></td>
+                                        <td><span class="delivery-recipient">{{ handover.recipient_name }}</span></td>
+                                        <td>{{ handover.form_count }}</td>
+                                        <td>{{ handover.created_by or '—' }}</td>
+                                        <td>{{ handover.created_at|datetime_ar }}</td>
+                                        <td>{{ handover.notes or '—' }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr class="empty-row">
+                                        <td colspan="6">لا توجد عمليات تسليم مسجلة بعد.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>التسليم للمدير</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/handover.js') }}" defer></script>
+</body>
+</html>

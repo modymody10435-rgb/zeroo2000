@@ -84,7 +84,7 @@
                         <div class="form-alert form-alert--success" role="status">
                             <svg class="icon"><use href="#icon-check"></use></svg>
                             <span>
-                                تم تحويل <strong>{{ delivery_notice.queued }}</strong> استمارة تلقائياً إلى قسم <a href="{{ url_for('main.ebi_deliveries_page') }}">التسليم</a> بعد اكتمال المراجعتين.
+                                تم تحويل <strong>{{ delivery_notice.queued }}</strong> استمارة تلقائياً إلى قسم <a href="{{ url_for('main.delivery_page') }}">التسليم</a> بعد اكتمال المراجعتين.
                                 {% if delivery_notice.pdf_available %}
                                 وتم إنشاء ملف PDF المجمع وتحديثه.
                                 {% elif delivery_notice.pdf_enabled and delivery_notice.pdf_error %}

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Polio Lab | تقرير البيانات المستلمة — وزارة الصحة</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 9mm 9mm 11mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        body {
+            font-family: "Noto Naskh Arabic", "Noto Sans Arabic", "DejaVu Sans", sans-serif;
+            color: #17353b;
+            font-size: 10px;
+            line-height: 1.5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .report-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #0d7d75;
+        }
+
+        .logo-slot {
+            width: 32mm;
+            min-height: 16mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-slot img {
+            max-width: 100%;
+            max-height: 16mm;
+            object-fit: contain;
+        }
+
+        .head-copy {
+            flex: 1;
+            text-align: center;
+        }
+
+        .eyebrow {
+            display: block;
+            color: #0d7d75;
+            font-size: 8.5px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+
+        .head-copy h1 {
+            margin: 2px 0 0;
+            font-size: 18px;
+            font-weight: 800;
+            color: #0b3b44;
+        }
+
+        .head-copy p {
+            margin: 2px 0 0;
+            color: #5d757a;
+            font-size: 9.5px;
+        }
+
+        .meta-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin: 9px 0 11px;
+            padding: 6px 9px;
+            border: 1px solid #d7e8e5;
+            border-radius: 6px;
+            background: #f2f8f7;
+        }
+
+        .meta-strip span {
+            display: block;
+            color: #6a8287;
+            font-size: 8px;
+        }
+
+        .meta-strip strong {
+            display: block;
+            margin-top: 1px;
+            color: #0b3b44;
+            font-size: 10.5px;
+            font-weight: 700;
+        }
+
+        .summary {
+            margin-bottom: 11px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+        }
+
+        .stat-card {
+            padding: 6px 8px;
+            border: 1px solid #d7e8e5;
+            border-radius: 6px;
+            background: #fbfdfd;
+        }
+
+        .stat-card strong {
+            display: block;
+            color: #0d7d75;
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1.15;
+        }
+
+        .stat-card small {
+            display: block;
+            color: #23474e;
+            font-size: 8.5px;
+            font-weight: 700;
+        }
+
+        .stat-card em {
+            display: block;
+            color: #7a9095;
+            font-size: 7.5px;
+            font-style: normal;
+        }
+
+        section {
+            margin-top: 11px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            padding-inline-start: 7px;
+            border-inline-start: 3px solid #0d7d75;
+            color: #0b3b44;
+            font-size: 12.5px;
+            font-weight: 800;
+        }
+
+        .section-head span {
+            color: #6a8287;
+            font-size: 8.5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        th {
+            padding: 4px 4px;
+            border: 1px solid #cfe3e0;
+            background: #eaf5f3;
+            color: #0b5f59;
+            font-size: 8.3px;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        td {
+            padding: 4px;
+            border: 1px solid #e1ecea;
+            font-size: 8.3px;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+
+        tbody tr:nth-child(even) td {
+            background: #fafcfc;
+        }
+
+        tbody tr {
+            break-inside: avoid;
+        }
+
+        td strong {
+            font-weight: 700;
+        }
+
+        .cell-stack span {
+            display: block;
+        }
+
+        .cell-muted {
+            color: #7a9095;
+            font-size: 7.5px;
+        }
+
+        .ltr {
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+
+        .reference {
+            font-family: "DejaVu Sans Mono", "Noto Sans Arabic", monospace;
+            font-size: 7.4px;
+            letter-spacing: -0.2px;
+        }
+
+        .empty {
+            margin: 0;
+            padding: 12px;
+            border: 1px dashed #cfe3e0;
+            border-radius: 6px;
+            background: #fbfdfd;
+            color: #6a8287;
+            font-size: 9px;
+            text-align: center;
+        }
+
+        .summary-note {
+            margin: 4px 0 0;
+            color: #7a9095;
+            font-size: 7.8px;
+        }
+
+        .report-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #d7e8e5;
+            color: #7a9095;
+            font-size: 7.8px;
+        }
+    </style>
+</head>
+<body>
+    <header class="report-head">
+        <div class="logo-slot">{% if logo_right %}<img src="{{ logo_right }}" alt="شعار">{% endif %}</div>
+        <div class="head-copy">
+            <span class="eyebrow">Polio Lab — المعمل المرجعي لتشخيص شلل الأطفال</span>
+            <h1>تقرير البيانات المستلمة — وزارة الصحة</h1>
+            <p>بوابة الاستلام · البيانات المسلَّمة من {{ recipient }} إلى وزارة الصحة</p>
+        </div>
+        <div class="logo-slot">{% if logo_left %}<img src="{{ logo_left }}" alt="شعار">{% endif %}</div>
+    </header>
+
+    <div class="meta-strip">
+        <div>
+            <span>تاريخ إنشاء التقرير</span>
+            <strong>{{ generated_at }}</strong>
+        </div>
+        <div>
+            <span>الجهة المستلمة</span>
+            <strong>وزارة الصحة</strong>
+        </div>
+        <div>
+            <span>عدد الاستمارات المستلمة</span>
+            <strong>{{ stats.received }}</strong>
+        </div>
+        <div>
+            <span>عمليات التسليم</span>
+            <strong>{{ stats.handovers }}</strong>
+        </div>
+    </div>
+
+    <section class="summary">
+        <div class="section-head">
+            <h2>ملخص الاستلام</h2>
+            <span>إجمالي {{ received_forms|length }} استمارة</span>
+        </div>
+        <div class="stat-grid">
+            <article class="stat-card">
+                <strong>{{ stats.received }}</strong>
+                <small>استمارة مستلمة</small>
+            </article>
+            <article class="stat-card">
+                <strong>{{ stats.handovers }}</strong>
+                <small>عمليات التسليم</small>
+            </article>
+            <article class="stat-card">
+                <strong>{{ stats.eligible }}</strong>
+                <small>جاهزة للتسليم</small>
+            </article>
+            <article class="stat-card">
+                <strong>{{ stats.immunodeficiency }}</strong>
+                <small>نقص المناعة</small>
+                <em>في البيانات المستلمة</em>
+            </article>
+            <article class="stat-card">
+                <strong>{{ stats.contacts }}</strong>
+                <small>المخالطين</small>
+                <em>في البيانات المستلمة</em>
+            </article>
+            <article class="stat-card">
+                <strong>{{ stats.normal }}</strong>
+                <small>AFB</small>
+                <em>في البيانات المستلمة</em>
+            </article>
+        </div>
+        <p class="summary-note">تُحتسب فئات نقص المناعة والمخالطين وAFB من الاستمارات المستلمة فقط، أما «جاهزة للتسليم» فتشير إلى الاستمارات المكتملة المراجعتين ولم تُسلَّم بعد.</p>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>الاستمارات المستلمة</h2>
+            <span>إجمالي {{ received_forms|length }} استمارة</span>
+        </div>
+
+        {% if received_forms %}
+        <table>
+            <colgroup>
+                <col style="width: 4%">
+                <col style="width: 12%">
+                <col style="width: 15%">
+                <col style="width: 9%">
+                <col style="width: 14%">
+                <col style="width: 14%">
+                <col style="width: 18%">
+                <col style="width: 14%">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th scope="col">م</th>
+                    <th scope="col">الاستمارة</th>
+                    <th scope="col">المريض</th>
+                    <th scope="col">المحافظة</th>
+                    <th scope="col">المراجعة الأولى</th>
+                    <th scope="col">المراجعة الثانية</th>
+                    <th scope="col">مرجع التسليم</th>
+                    <th scope="col">توقيت الاستلام</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in received_forms %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="cell-stack">
+                        <span class="ltr"><strong>{% if form.form_id %}#{{ form.form_id }}{% else %}—{% endif %}</strong></span>
+                        <span class="ltr cell-muted">{{ form.lab_number or '—' }}</span>
+                    </td>
+                    <td>{{ form.patient_name or '—' }}</td>
+                    <td>{{ form.governorate or '—' }}</td>
+                    <td class="cell-stack">
+                        <span>{{ form.first_reviewer_name or '—' }}</span>
+                        {% if form.first_reviewed_at %}
+                        <span class="cell-muted">{{ form.first_reviewed_at|datetime_ar }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-stack">
+                        <span>{{ form.second_reviewer_name or '—' }}</span>
+                        {% if form.second_reviewed_at %}
+                        <span class="cell-muted">{{ form.second_reviewed_at|datetime_ar }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="ltr reference"><strong>{{ form.handover_reference or '—' }}</strong></td>
+                    <td>{{ form.handover_created_at|datetime_ar }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">لا توجد استمارات مستلمة حتى الآن. ستظهر الاستمارات هنا تلقائياً بعد تسليمها من صفحة «التسليم للمدير».</p>
+        {% endif %}
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>سجل عمليات الاستلام</h2>
+            <span>{{ history|length }} عملية</span>
+        </div>
+
+        <table>
+            <colgroup>
+                <col style="width: 20%">
+                <col style="width: 14%">
+                <col style="width: 9%">
+                <col style="width: 12%">
+                <col style="width: 15%">
+                <col style="width: 30%">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th scope="col">مرجع التسليم</th>
+                    <th scope="col">المستلم</th>
+                    <th scope="col">عدد الاستمارات</th>
+                    <th scope="col">سلّمها</th>
+                    <th scope="col">توقيت العملية</th>
+                    <th scope="col">ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for handover in history %}
+                <tr>
+                    <td class="ltr reference"><strong>{{ handover.reference }}</strong></td>
+                    <td>{{ handover.recipient_name or '—' }}</td>
+                    <td>{{ handover.form_count }}</td>
+                    <td>{{ handover.created_by or '—' }}</td>
+                    <td>{{ handover.created_at|datetime_ar }}</td>
+                    <td>{{ handover.notes or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty">لا توجد عمليات استلام مسجلة بعد.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <footer class="report-foot">
+        <span>تم إنشاء هذا التقرير آلياً من نظام Polio Lab — بوابة استلام بيانات وزارة الصحة.</span>
+        <span>{{ generated_at }}</span>
+    </footer>
+</body>
+</html>

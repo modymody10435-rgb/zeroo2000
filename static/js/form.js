@@ -318,6 +318,111 @@
         window.print();
     }
 
+    function initComboboxes() {
+        elements.form.querySelectorAll("[data-combo]").forEach((combo) => {
+            const input = combo.querySelector("input");
+            const list = combo.querySelector(".combo-list");
+            if (!input || !list) return;
+
+            const options = Array.from(list.querySelectorAll('[role="option"]'));
+            options.forEach((option, index) => {
+                option.id = `${list.id}-option-${index + 1}`;
+            });
+            let active = -1;
+
+            function visibleOptions() {
+                return options.filter((option) => !option.hidden);
+            }
+
+            function setActive(index) {
+                const items = visibleOptions();
+                options.forEach((option) => option.classList.remove("is-active"));
+                if (!items[index]) {
+                    active = -1;
+                    input.removeAttribute("aria-activedescendant");
+                    return;
+                }
+                active = index;
+                items[index].classList.add("is-active");
+                input.setAttribute("aria-activedescendant", items[index].id);
+                items[index].scrollIntoView({ block: "nearest" });
+            }
+
+            function close() {
+                list.hidden = true;
+                active = -1;
+                input.setAttribute("aria-expanded", "false");
+                input.removeAttribute("aria-activedescendant");
+            }
+
+            function open(applyFilter) {
+                const query = applyFilter ? input.value.trim() : "";
+                options.forEach((option) => {
+                    option.hidden = Boolean(query) && !option.dataset.value.includes(query);
+                });
+                if (!options.some((option) => !option.hidden)) {
+                    close();
+                    return;
+                }
+                list.hidden = false;
+                input.setAttribute("aria-expanded", "true");
+                active = -1;
+                options.forEach((option) => option.classList.remove("is-active"));
+            }
+
+            function choose(option) {
+                input.value = option.dataset.value;
+                close();
+                input.focus();
+            }
+
+            input.addEventListener("focus", () => open(false));
+            input.addEventListener("blur", () => {
+                window.setTimeout(close, 120);
+            });
+            input.addEventListener("click", () => {
+                if (list.hidden) open(false);
+            });
+            input.addEventListener("input", () => open(true));
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    close();
+                    return;
+                }
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                    event.preventDefault();
+                    if (list.hidden) {
+                        open(false);
+                        return;
+                    }
+                    const items = visibleOptions();
+                    if (!items.length) return;
+                    if (event.key === "ArrowDown") {
+                        setActive(active < 0 ? 0 : Math.min(active + 1, items.length - 1));
+                    } else {
+                        setActive(active < 0 ? items.length - 1 : Math.max(active - 1, 0));
+                    }
+                    return;
+                }
+                if (event.key === "Enter" && !list.hidden && active >= 0) {
+                    const items = visibleOptions();
+                    if (items[active]) {
+                        event.preventDefault();
+                        choose(items[active]);
+                    }
+                }
+            });
+            list.addEventListener("mousedown", (event) => {
+                event.preventDefault();
+                const option = event.target.closest('[role="option"]');
+                if (option) choose(option);
+            });
+            document.addEventListener("click", (event) => {
+                if (!combo.contains(event.target)) close();
+            });
+        });
+    }
+
     function bindEvents() {
         const currentDate = document.getElementById("current-date");
         if (currentDate) currentDate.textContent = todayLabel();
@@ -373,6 +478,7 @@
         elements.idLabel.textContent = state.id ? `رقم #${state.id}` : "لم تُحفظ بعد";
         refreshMarks();
         syncDateGroups();
+        initComboboxes();
         bindEvents();
     }
 

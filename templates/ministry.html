@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b3b4a">
+    <title>Polio Lab | وزارة الصحة</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
+</head>
+<body class="users-page deliveries-page">
+    {% set active_nav = 'ministry' %}
+    {% include "_icons.html" %}
+
+    <div class="app-shell">
+        {% include "_sidebar.html" %}
+
+        <div class="app-main">
+            <header class="topbar no-print">
+                <button class="icon-button menu-button" id="menu-button" type="button" aria-label="فتح القائمة">
+                    <svg class="icon"><use href="#icon-menu"></use></svg>
+                </button>
+                <div class="page-heading">
+                    <span>بوابة الاستلام</span>
+                    <h2>وزارة الصحة</h2>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-chip">
+                        <span class="user-avatar">{{ (current_user[0] if current_user else 'م')|upper }}</span>
+                        <span class="user-copy">
+                            <strong>{{ current_user or 'معمل شلل الأطفال' }}</strong>
+                            <small>{% if current_user_role == 'moh' %}حساب وزارة الصحة{% else %}مدير النظام{% endif %}</small>
+                        </span>
+                    </div>
+                    <form class="logout-form" method="post" action="{{ url_for('main.logout') }}">
+                        <button class="icon-button logout-button" type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                            <svg class="icon"><use href="#icon-log-out"></use></svg>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="page-content users-content">
+                <section class="panel users-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="section-kicker">بوابة الاستلام</span>
+                            <h2>البيانات المستلمة من {{ recipient }}</h2>
+                            <p>تعرض هذه الصفحة تفاصيل الاستمارات التي سلّمها {{ recipient }} إلى وزارة الصحة، مع مرجع كل عملية وتوقيت الاستلام.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <a class="button button-primary" id="ministry-pdf-download" href="{{ url_for('main.ministry_pdf') }}">
+                                <svg class="icon"><use href="#icon-pdf"></use></svg>
+                                <span>تحميل تقرير PDF</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if pdf_error %}
+                    <div class="users-notices">
+                        <div class="form-alert" role="alert">
+                            <svg class="icon"><use href="#icon-alert"></use></svg>
+                            <span>تعذر إنشاء تقرير PDF: {{ pdf_error }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="delivery-stats">
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-sent"><svg class="icon"><use href="#icon-check"></use></svg></span>
+                            <div><strong>{{ stats.received }}</strong><small>استمارة مستلمة</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-history"><svg class="icon"><use href="#icon-handover"></use></svg></span>
+                            <div><strong>{{ stats.handovers }}</strong><small>عمليات التسليم</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-ready"><svg class="icon"><use href="#icon-file"></use></svg></span>
+                            <div><strong>{{ stats.eligible }}</strong><small>جاهزة للتسليم</small></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-failed"><svg class="icon"><use href="#icon-alert"></use></svg></span>
+                            <div><strong>{{ stats.immunodeficiency }}</strong><small>نقص المناعة</small><em class="delivery-stat-note">في البيانات المستلمة</em></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon is-contacts"><svg class="icon"><use href="#icon-users"></use></svg></span>
+                            <div><strong>{{ stats.contacts }}</strong><small>المخالطين</small><em class="delivery-stat-note">في البيانات المستلمة</em></div>
+                        </article>
+                        <article class="delivery-stat">
+                            <span class="delivery-stat-icon"><svg class="icon"><use href="#icon-file"></use></svg></span>
+                            <div><strong>{{ stats.normal }}</strong><small>AFB</small><em class="delivery-stat-note">في البيانات المستلمة</em></div>
+                        </article>
+                    </div>
+
+                    <fieldset class="delivery-fieldset delivery-forms-fieldset">
+                        <legend>الاستمارات المستلمة</legend>
+
+                        {% if received_forms %}
+                        <div class="delivery-table-hint">
+                            <span>تظهر هنا كل استمارة سلّمها {{ recipient }} إلى وزارة الصحة، مع بيانات المراجعة ومرجع عملية التسليم.</span>
+                            <span class="delivery-history-count">إجمالي {{ received_forms|length }} استمارة</span>
+                        </div>
+                        <div class="table-wrap users-table-wrap">
+                            <table class="users-table delivery-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">الاستمارة</th>
+                                        <th scope="col">المريض</th>
+                                        <th scope="col">المحافظة</th>
+                                        <th scope="col">المراجعة الأولى</th>
+                                        <th scope="col">المراجعة الثانية</th>
+                                        <th scope="col">مرجع التسليم</th>
+                                        <th scope="col">توقيت الاستلام</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in received_forms %}
+                                    <tr>
+                                        <td>
+                                            <div class="reviews-form-id">
+                                                <strong dir="ltr">{% if form.form_id %}#{{ form.form_id }}{% else %}—{% endif %}</strong>
+                                                <span dir="auto">{{ form.lab_number }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ form.patient_name }}</td>
+                                        <td>{{ form.governorate or '—' }}</td>
+                                        <td>
+                                            <span class="delivery-reviewer">{{ form.first_reviewer_name or '—' }}</span>
+                                            {% if form.first_reviewed_at %}
+                                            <small class="delivery-review-time">{{ form.first_reviewed_at|datetime_ar }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="delivery-reviewer">{{ form.second_reviewer_name or '—' }}</span>
+                                            {% if form.second_reviewed_at %}
+                                            <small class="delivery-review-time">{{ form.second_reviewed_at|datetime_ar }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td><strong class="delivery-reference" dir="ltr">{{ form.handover_reference }}</strong></td>
+                                        <td>{{ form.handover_created_at|datetime_ar }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="delivery-empty">
+                            <span class="delivery-empty-icon"><svg class="icon"><use href="#icon-location"></use></svg></span>
+                            <div>
+                                <strong>لا توجد بيانات بعد.</strong>
+                                <span>ستظهر هنا الاستمارات تلقائياً بعد تسليمها من صفحة «التسليم للمدير».</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </fieldset>
+
+                    <div class="delivery-history">
+                        <div class="delivery-section-heading">
+                            <div>
+                                <span class="section-kicker">السجل</span>
+                                <h3>سجل عمليات الاستلام</h3>
+                            </div>
+                            <span class="delivery-history-count">آخر {{ history|length }} عملية</span>
+                        </div>
+
+                        <div class="table-wrap users-table-wrap">
+                            <table class="users-table delivery-history-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">المرجع</th>
+                                        <th scope="col">المستلم</th>
+                                        <th scope="col">الاستمارات</th>
+                                        <th scope="col">سلّمها</th>
+                                        <th scope="col">توقيت العملية</th>
+                                        <th scope="col">ملاحظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for handover in history %}
+                                    <tr>
+                                        <td><strong class="delivery-reference" dir="ltr">{{ handover.reference }}</strong></td>
+                                        <td><span class="delivery-recipient">{{ handover.recipient_name }}</span></td>
+                                        <td>{{ handover.form_count }}</td>
+                                        <td>{{ handover.created_by or '—' }}</td>
+                                        <td>{{ handover.created_at|datetime_ar }}</td>
+                                        <td>{{ handover.notes or '—' }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr class="empty-row">
+                                        <td colspan="6">لا توجد عمليات استلام مسجلة بعد.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer no-print">
+                <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
+                <span>بوابة استلام بيانات وزارة الصحة</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/nav.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" defer></script>
+</body>
+</html>

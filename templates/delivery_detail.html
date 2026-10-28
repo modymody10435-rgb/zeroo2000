@@ -49,9 +49,9 @@
                 <section class="panel users-panel">
                     <div class="panel-header">
                         <div>
-                            <span class="section-kicker">EBI</span>
+                            <span class="section-kicker">الدكتورة أميرة</span>
                             <h2>العملية <span dir="ltr">{{ delivery.reference }}</span></h2>
-                            <p>تفاصيل بيانات المستلم، والاستمارات المرسلة، واستجابة نظام EBI.</p>
+                            <p>تفاصيل بيانات المستلم، والاستمارات المرسلة، واستجابة الدكتورة أميرة.</p>
                         </div>
                         <div class="panel-actions">
                             <a class="button button-secondary" href="{{ url_for('main.ebi_deliveries_page') }}">
@@ -69,12 +69,12 @@
                     {% if delivery.status == 'failed' %}
                     <div class="form-alert" role="alert">
                         <svg class="icon"><use href="#icon-alert"></use></svg>
-                        <span>{{ delivery.error_message or 'فشل إرسال البيانات إلى نظام EBI.' }}</span>
+                        <span>{{ delivery.error_message or 'فشل إرسال البيانات إلى الدكتورة أميرة.' }}</span>
                     </div>
                     {% elif delivery.status == 'delivered' %}
                     <div class="form-alert form-alert--success" role="status">
                         <svg class="icon"><use href="#icon-check"></use></svg>
-                        <span>تم استلام نظام EBI للبيانات بنجاح.</span>
+                        <span>تم استلام البيانات بواسطة الدكتورة أميرة بنجاح.</span>
                     </div>
                     {% endif %}
 
@@ -181,7 +181,7 @@
                     <div class="delivery-response-grid">
                         <section class="delivery-response-card">
                             <span class="section-kicker">الاستجابة</span>
-                            <h3>استجابة EBI</h3>
+                            <h3>استجابة الدكتورة أميرة</h3>
                             {% if delivery.response_status %}
                             <p class="delivery-response-status">HTTP {{ delivery.response_status }}</p>
                             {% endif %}
@@ -210,7 +210,7 @@
 
             <footer class="app-footer no-print">
                 <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
-                <span>التسليم الإلكتروني EBI</span>
+                <span>التسليم الإلكتروني إلى الدكتورة أميرة</span>
             </footer>
         </div>
     </div>

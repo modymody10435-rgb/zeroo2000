@@ -1,13 +1,20 @@
 <aside class="sidebar" id="sidebar">
-    <a class="brand" href="{{ url_for('main.index') }}" aria-label="المعامل المرجعية الرئيسية">
+    <a class="brand" href="{{ url_for('main.ministry_page') if current_user_role == 'moh' else url_for('main.index') }}" aria-label="المعامل المرجعية الرئيسية">
         <span class="brand-mark"><svg class="icon"><use href="#icon-shield"></use></svg></span>
         <span class="brand-copy">
             <strong>المعامل المرجعية</strong>
-            <small>الاستمارات</small>
+            <small>{{ 'بوابة الاستلام' if current_user_role == 'moh' else 'الاستمارات' }}</small>
         </span>
     </a>
 
     <nav class="sidebar-nav" aria-label="التنقل الرئيسي">
+        {% if current_user_role == 'moh' %}
+        <span class="nav-label">بوابة الاستلام</span>
+        <a class="nav-item{{ ' active' if active_nav == 'ministry' }}" href="{{ url_for('main.ministry_page') }}">
+            <svg class="icon"><use href="#icon-location"></use></svg>
+            <span>وزارة الصحة</span>
+        </a>
+        {% else %}
         <span class="nav-label">المعمل المرجعي</span>
         <a class="nav-item{{ ' active' if active_nav == 'lab-forms' }}" href="{{ url_for('main.forms_page') }}">
             <svg class="icon"><use href="#icon-file"></use></svg>
@@ -23,9 +30,13 @@
         </a>
         {% if current_user_role == 'admin' %}
         <span class="nav-label">التسليم</span>
-        <a class="nav-item{{ ' active' if active_nav == 'deliveries' }}" href="{{ url_for('main.ebi_deliveries_page') }}">
-            <svg class="icon"><use href="#icon-upload"></use></svg>
-            <span>تسليم إلى EBI</span>
+        <a class="nav-item{{ ' active' if active_nav == 'deliveries' }}" href="{{ url_for('main.delivery_page') }}">
+            <svg class="icon"><use href="#icon-handover"></use></svg>
+            <span>التسليم للمدير</span>
+        </a>
+        <a class="nav-item{{ ' active' if active_nav == 'ministry' }}" href="{{ url_for('main.ministry_page') }}">
+            <svg class="icon"><use href="#icon-location"></use></svg>
+            <span>وزارة الصحة</span>
         </a>
         <span class="nav-label">الإدارة</span>
         <a class="nav-item{{ ' active' if active_nav == 'users' }}" href="{{ url_for('main.users_page') }}">
@@ -37,8 +48,10 @@
             <span>إضافة مستخدم</span>
         </a>
         {% endif %}
+        {% endif %}
     </nav>
 
+    {% if current_user_role != 'moh' %}
     <div class="sidebar-campaign sidebar-campaign--lab">
         <span class="campaign-pulse"></span>
         <span class="campaign-kicker">المعمل المرجعي</span>
@@ -49,6 +62,7 @@
             <span>فتح استمارة جديدة</span>
         </a>
     </div>
+    {% endif %}
 
     <div class="sidebar-footer">
         <span class="status-dot"></span>

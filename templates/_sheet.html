@@ -54,6 +54,7 @@
                                         <option value="2" {% if form and form.contact_number == '2' %}selected{% endif %}>مخالط رقم 2</option>
                                         <option value="3" {% if form and form.contact_number == '3' %}selected{% endif %}>مخالط رقم 3</option>
                                         <option value="نقص مناعة" {% if form and form.contact_number == 'نقص مناعة' %}selected{% endif %}>نقص مناعة</option>
+                                        <option value="AFP" {% if form and form.contact_number == 'AFP' %}selected{% endif %}>حالة AFP</option>
                                     </select>
                                     <input name="national_id" type="text" placeholder="—" value="{{ form.national_id if form else '' }}">
                                 </td>
@@ -157,10 +158,24 @@
                             <tr>
                                 <th scope="row" class="row-label">النتيجة النهائية</th>
                                 <td>
-                                    <input class="final-result-input" name="sample1_final" type="text" list="final-results-{{ form.id if form else 'new' }}" placeholder="اكتب أو اختر النتيجة" value="{{ form.sample1_final if form else '' }}">
+                                    <div class="combo" data-combo>
+                                        <input class="final-result-input" name="sample1_final" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="final-results-1-{{ form.id if form else 'new' }}" placeholder="اكتب أو اختر النتيجة" value="{{ form.sample1_final if form else '' }}">
+                                        <ul class="combo-list" id="final-results-1-{{ form.id if form else 'new' }}" role="listbox" hidden>
+                                            {% for result in FINAL_RESULTS %}
+                                            <li role="option" data-value="{{ result }}">{{ result }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
                                 </td>
                                 <td>
-                                    <input class="final-result-input" name="sample2_final" type="text" list="final-results-{{ form.id if form else 'new' }}" placeholder="اكتب أو اختر النتيجة" value="{{ form.sample2_final if form else '' }}">
+                                    <div class="combo" data-combo>
+                                        <input class="final-result-input" name="sample2_final" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="final-results-2-{{ form.id if form else 'new' }}" placeholder="اكتب أو اختر النتيجة" value="{{ form.sample2_final if form else '' }}">
+                                        <ul class="combo-list" id="final-results-2-{{ form.id if form else 'new' }}" role="listbox" hidden>
+                                            {% for result in FINAL_RESULTS %}
+                                            <li role="option" data-value="{{ result }}">{{ result }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
@@ -196,9 +211,4 @@
                             </div>
                         </div>
                     </footer>
-                    <datalist id="final-results-{{ form.id if form else 'new' }}">
-                        {% for result in FINAL_RESULTS %}
-                        <option value="{{ result }}"></option>
-                        {% endfor %}
-                    </datalist>
                 </form>

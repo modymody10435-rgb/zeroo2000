@@ -476,6 +476,51 @@
     text-align: center;
 }
 
+.combo {
+    position: relative;
+}
+
+.combo-list {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: min(430px, calc(100vw - 24px));
+    max-width: min(480px, calc(100vw - 24px));
+    max-height: 250px;
+    margin: 0;
+    padding: 4px;
+    overflow-y: auto;
+    list-style: none;
+    background: #ffffff;
+    border: 1px solid rgba(13, 125, 117, 0.25);
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(17, 47, 56, 0.18);
+    direction: rtl;
+    text-align: right;
+}
+
+.combo-list[hidden],
+.combo-list li[hidden] {
+    display: none;
+}
+
+.combo-list li {
+    padding: 6px 8px;
+    border-radius: 4px;
+    color: #111111;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: normal;
+    cursor: pointer;
+}
+
+.combo-list li:hover,
+.combo-list li.is-active {
+    background: rgba(13, 125, 117, 0.1);
+}
+
 .age-cell {
     padding: 0;
 }
@@ -1054,6 +1099,10 @@
 
     .form-sheet select option {
         color: #000000;
+    }
+
+    .form-sheet .combo-list {
+        display: none !important;
     }
 
     .paper-grid th,

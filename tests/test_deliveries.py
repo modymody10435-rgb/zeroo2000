@@ -139,10 +139,17 @@ class EbiDeliveryTestCase(unittest.TestCase):
 
     def test_admin_sees_delivery_link_and_page(self):
         page = self.client.get("/forms").get_data(as_text=True)
-        self.assertIn("تسليم إلى EBI", page)
+        self.assertIn("التسليم للمدير", page)
         self.assertIn('href="/deliveries"', page)
 
-        response = self.client.get("/deliveries")
+        merged = self.client.get("/deliveries")
+        self.assertEqual(merged.status_code, 200)
+        merged_page = merged.get_data(as_text=True)
+        self.assertIn("تسليم الاستمارات للمدير", merged_page)
+        self.assertIn('value="وزارة الصحة"', merged_page)
+        self.assertNotIn("الدكتورة أميرة", merged_page)
+
+        response = self.client.get("/deliveries/ebi")
         self.assertEqual(response.status_code, 200)
         page = response.get_data(as_text=True)
         self.assertIn("تسليم الاستمارات المراجعة", page)
@@ -163,15 +170,16 @@ class EbiDeliveryTestCase(unittest.TestCase):
         self.client.post(
             "/api/login", json={"username": "regular", "password": "StrongPass9"}
         )
+        self.assertEqual(self.client.get("/deliveries/ebi").status_code, 403)
         self.assertEqual(self.client.get("/deliveries").status_code, 403)
         self.assertEqual(
             self.client.post(
-                "/deliveries", data=self.delivery_payload([1])
+                "/deliveries/ebi", data=self.delivery_payload([1])
             ).status_code,
             403,
         )
         page = self.client.get("/forms").get_data(as_text=True)
-        self.assertNotIn("تسليم إلى EBI", page)
+        self.assertNotIn("التسليم للمدير", page)
 
     def test_delivery_page_shows_eligible_category_cards(self):
         self.create_reviewed_form(
@@ -190,14 +198,14 @@ class EbiDeliveryTestCase(unittest.TestCase):
             lab_number="L20B-CAT-E", national_id="42601151234571", contact_number="نقص مناعة"
         )
 
-        page = self.client.get("/deliveries").get_data(as_text=True)
+        page = self.client.get("/deliveries/ebi").get_data(as_text=True)
         self.assertNotIn("عمليات فاشلة", page)
         self.assertIn("نقص المناعة", page)
         self.assertIn("المخالطين", page)
-        self.assertIn("الحالات العادية", page)
+        self.assertIn("AFB", page)
 
         counts = {}
-        for name in ("نقص المناعة", "المخالطين", "الحالات العادية"):
+        for name in ("نقص المناعة", "المخالطين", "AFB"):
             match = re.search(
                 rf"<strong>(\d+)</strong><small>{name}</small>", page
             )
@@ -205,7 +213,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
             counts[name] = int(match.group(1))
         self.assertEqual(counts["نقص المناعة"], 1)
         self.assertEqual(counts["المخالطين"], 2)
-        self.assertEqual(counts["الحالات العادية"], 1)
+        self.assertEqual(counts["AFB"], 1)
 
     def test_only_fully_reviewed_forms_are_listed(self):
         reviewed_id = self.create_reviewed_form()
@@ -226,7 +234,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
             )
             connection.commit()
 
-        page = self.client.get("/deliveries").get_data(as_text=True)
+        page = self.client.get("/deliveries/ebi").get_data(as_text=True)
         self.assertIn(f'value="{reviewed_id}"', page)
         self.assertNotIn(f'value="{unreviewed_id}"', page)
         self.assertNotIn(f'value="{first_only_id}"', page)
@@ -244,11 +252,11 @@ class EbiDeliveryTestCase(unittest.TestCase):
 
         with mock.patch("app.urlopen", side_effect=fake_urlopen):
             response = self.client.post(
-                "/deliveries", data=self.delivery_payload([form_id])
+                "/deliveries/ebi", data=self.delivery_payload([form_id])
             )
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.headers["Location"].endswith("/deliveries?sent=1"))
+        self.assertTrue(response.headers["Location"].endswith("/deliveries/ebi?sent=1"))
         delivery = self.get_delivery()
         self.assertIsNotNone(delivery)
         self.assertEqual(delivery["status"], "delivered")
@@ -273,7 +281,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
             "د. محمد علي",
         )
 
-        page = self.client.get("/deliveries").get_data(as_text=True)
+        page = self.client.get("/deliveries/ebi").get_data(as_text=True)
         self.assertIn("تم تسليم", page)
         self.assertIn(delivery["reference"], page)
         self.assertNotIn(f'value="{form_id}"', page)
@@ -290,7 +298,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
 
         with mock.patch("app.urlopen", side_effect=fake_urlopen):
             response = self.client.post(
-                "/deliveries", data=self.delivery_payload([form_id])
+                "/deliveries/ebi", data=self.delivery_payload([form_id])
             )
 
         self.assertEqual(response.status_code, 302)
@@ -302,23 +310,23 @@ class EbiDeliveryTestCase(unittest.TestCase):
 
         with mock.patch("app.urlopen", side_effect=URLError("offline")):
             response = self.client.post(
-                "/deliveries", data=self.delivery_payload([form_id])
+                "/deliveries/ebi", data=self.delivery_payload([form_id])
             )
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.headers["Location"].endswith("/deliveries?failed=1"))
+        self.assertTrue(response.headers["Location"].endswith("/deliveries/ebi?failed=1"))
         delivery = self.get_delivery()
         self.assertEqual(delivery["status"], "failed")
         self.assertIn("تعذر الاتصال", delivery["error_message"])
-        page = self.client.get("/deliveries").get_data(as_text=True)
+        page = self.client.get("/deliveries/ebi").get_data(as_text=True)
         self.assertIn(f'value="{form_id}"', page)
 
         with mock.patch("app.urlopen", return_value=FakeEbiResponse(status=200)):
             retry = self.client.post(
-                "/deliveries", data=self.delivery_payload([form_id])
+                "/deliveries/ebi", data=self.delivery_payload([form_id])
             )
         self.assertEqual(retry.status_code, 302)
-        self.assertTrue(retry.headers["Location"].endswith("/deliveries?sent=2"))
+        self.assertTrue(retry.headers["Location"].endswith("/deliveries/ebi?sent=2"))
         self.assertEqual(self.get_delivery(2)["status"], "delivered")
 
     def test_http_error_records_response_body(self):
@@ -335,7 +343,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
             )
 
         with mock.patch("app.urlopen", side_effect=fake_urlopen):
-            self.client.post("/deliveries", data=self.delivery_payload([form_id]))
+            self.client.post("/deliveries/ebi", data=self.delivery_payload([form_id]))
 
         delivery = self.get_delivery()
         self.assertEqual(delivery["status"], "failed")
@@ -350,14 +358,14 @@ class EbiDeliveryTestCase(unittest.TestCase):
         )
 
         missing_recipient = self.client.post(
-            "/deliveries", data=self.delivery_payload([reviewed_id], recipient_name="")
+            "/deliveries/ebi", data=self.delivery_payload([reviewed_id], recipient_name="")
         )
         self.assertEqual(missing_recipient.status_code, 400)
         self.assertIn("اسم المستلم مطلوب", missing_recipient.get_data(as_text=True))
 
         future_date = (date.today() + timedelta(days=1)).isoformat()
         future = self.client.post(
-            "/deliveries",
+            "/deliveries/ebi",
             data=self.delivery_payload([reviewed_id], delivery_date=future_date),
         )
         self.assertEqual(future.status_code, 400)
@@ -367,13 +375,13 @@ class EbiDeliveryTestCase(unittest.TestCase):
         )
 
         unreviewed = self.client.post(
-            "/deliveries", data=self.delivery_payload([unreviewed_id])
+            "/deliveries/ebi", data=self.delivery_payload([unreviewed_id])
         )
         self.assertEqual(unreviewed.status_code, 400)
         self.assertIn("غير مؤهلة", unreviewed.get_data(as_text=True))
 
         no_selection = self.client.post(
-            "/deliveries", data=self.delivery_payload([])
+            "/deliveries/ebi", data=self.delivery_payload([])
         )
         self.assertEqual(no_selection.status_code, 400)
         self.assertIn(
@@ -385,25 +393,25 @@ class EbiDeliveryTestCase(unittest.TestCase):
         form_id = self.create_reviewed_form()
         self.app.config["EBI_API_URL"] = ""
         response = self.client.post(
-            "/deliveries", data=self.delivery_payload([form_id])
+            "/deliveries/ebi", data=self.delivery_payload([form_id])
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("خدمة EBI غير مهيأة", response.get_data(as_text=True))
+        self.assertIn("خدمة التسليم إلى الدكتورة أميرة غير مهيأة", response.get_data(as_text=True))
         self.assertIsNone(self.get_delivery())
 
-        page = self.client.get("/deliveries").get_data(as_text=True)
+        page = self.client.get("/deliveries/ebi").get_data(as_text=True)
         self.assertNotIn("EBI_API_URL", page)
-        self.assertNotIn("الإرسال إلى EBI غير مفعّل", page)
-        self.assertNotIn("خدمة EBI غير مهيأة", page)
+        self.assertNotIn("الإرسال إلى الدكتورة أميرة غير مفعّل", page)
+        self.assertNotIn("خدمة التسليم إلى الدكتورة أميرة غير مهيأة", page)
 
     def test_delivered_form_cannot_be_delivered_again(self):
         form_id = self.create_reviewed_form()
         with mock.patch("app.urlopen", return_value=FakeEbiResponse(status=200)):
-            self.client.post("/deliveries", data=self.delivery_payload([form_id]))
+            self.client.post("/deliveries/ebi", data=self.delivery_payload([form_id]))
 
         with mock.patch("app.urlopen", return_value=FakeEbiResponse(status=200)):
             duplicate = self.client.post(
-                "/deliveries", data=self.delivery_payload([form_id])
+                "/deliveries/ebi", data=self.delivery_payload([form_id])
             )
         self.assertEqual(duplicate.status_code, 400)
         self.assertIn("غير مؤهلة", duplicate.get_data(as_text=True))
@@ -473,7 +481,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
         self.assertIn("تم تحويل", page)
         self.assertIn("ملف PDF المجمع", page)
 
-        delivery_page = self.client.get("/deliveries").get_data(as_text=True)
+        delivery_page = self.client.get("/deliveries/ebi").get_data(as_text=True)
         self.assertIn("ملف الاستمارات الجاهزة للتسليم", delivery_page)
         self.assertIn("عرض PDF", delivery_page)
         self.assertIn(f'value="{form_id}"', delivery_page)
@@ -560,7 +568,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
                 f"/reviews/{form_id}", data=self.review_payload()
             )
             page = self.client.get("/reviews").get_data(as_text=True)
-            delivery_page = self.client.get("/deliveries").get_data(
+            delivery_page = self.client.get("/deliveries/ebi").get_data(
                 as_text=True
             )
 
@@ -579,7 +587,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
     def test_delivery_detail_is_admin_only_and_shows_audit(self):
         form_id = self.create_reviewed_form()
         with mock.patch("app.urlopen", return_value=FakeEbiResponse(status=200)):
-            self.client.post("/deliveries", data=self.delivery_payload([form_id]))
+            self.client.post("/deliveries/ebi", data=self.delivery_payload([form_id]))
 
         detail = self.client.get("/deliveries/1")
         self.assertEqual(detail.status_code, 200)
@@ -589,7 +597,7 @@ class EbiDeliveryTestCase(unittest.TestCase):
         self.assertIn("أحمد مندوب المعمل", page)
         self.assertIn("L20B-EBI-001", page)
         self.assertIn("Payload", page)
-        self.assertIn("استجابة EBI", page)
+        self.assertIn("استجابة الدكتورة أميرة", page)
 
         self.client.post("/logout")
         self.assertEqual(self.client.get("/deliveries/1").status_code, 302)

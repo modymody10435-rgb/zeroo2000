@@ -147,6 +147,81 @@ class NewUserTestCase(unittest.TestCase):
         self.assertIn('href="/users"', page)
         self.assertIn("إدارة المستخدمين", page)
 
+    def test_new_user_role_dropdown_has_ministry_option(self):
+        page = self.client.get("/users/new").get_data(as_text=True)
+        self.assertIn('value="moh"', page)
+        self.assertIn("وزارة الصحة — وصول لصفحة وزارة الصحة فقط", page)
+
+    def test_admin_can_create_ministry_user(self):
+        response = self.create_user(username="moh.user", role="moh")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/users?created=moh.user", response.headers["Location"])
+
+        with sqlite3.connect(self.database) as connection:
+            row = connection.execute(
+                "SELECT role FROM users WHERE username = ?", ("moh.user",)
+            ).fetchone()
+        self.assertEqual(row[0], "moh")
+
+        page = self.client.get("/users").get_data(as_text=True)
+        self.assertIn("moh.user", page)
+        self.assertIn("وزارة الصحة", page)
+
+    def test_ministry_user_is_restricted_to_ministry_page(self):
+        self.create_user(username="moh.user", role="moh")
+        self.client.post("/logout")
+        login = self.client.post(
+            "/api/login",
+            json={"username": "moh.user", "password": "StrongPass9"},
+        )
+        self.assertEqual(login.status_code, 200)
+        self.assertEqual(login.get_json()["redirect"], "/ministry-of-health")
+
+        page = self.client.get("/ministry-of-health")
+        self.assertEqual(page.status_code, 200)
+        html = page.get_data(as_text=True)
+        self.assertIn("حساب وزارة الصحة", html)
+        self.assertIn('href="/ministry-of-health"', html)
+        self.assertNotIn('href="/forms"', html)
+        self.assertNotIn('href="/users"', html)
+        self.assertNotIn('href="/deliveries"', html)
+        self.assertNotIn("إدارة المستخدمين", html)
+        self.assertNotIn("استمارة جديدة", html)
+
+        for path in (
+            "/forms",
+            "/forms/new",
+            "/reviews",
+            "/deliveries",
+            "/users",
+            "/users/new",
+        ):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 302, path)
+            self.assertEqual(response.headers["Location"], "/ministry-of-health", path)
+
+        self.assertEqual(self.client.get("/api/forms").status_code, 403)
+        self.assertEqual(self.client.get("/api/health").status_code, 403)
+        self.assertEqual(self.client.post("/deliveries", data={}).status_code, 403)
+
+    def test_ministry_user_is_sent_to_ministry_page_on_login(self):
+        self.create_user(username="moh.user", role="moh")
+        self.client.post("/logout")
+
+        form_login = self.client.post(
+            "/login", data={"username": "moh.user", "password": "StrongPass9"}
+        )
+        self.assertEqual(form_login.status_code, 302)
+        self.assertTrue(form_login.headers["Location"].endswith("/ministry-of-health"))
+
+        index = self.client.get("/")
+        self.assertEqual(index.status_code, 302)
+        self.assertEqual(index.headers["Location"], "/ministry-of-health")
+
+        login_get = self.client.get("/login")
+        self.assertEqual(login_get.status_code, 302)
+        self.assertEqual(login_get.headers["Location"], "/ministry-of-health")
+
     def test_regular_user_sidebar_hides_management_links(self):
         self.create_user()
         self.client.post("/logout")
@@ -384,6 +459,67 @@ class UserRoleMigrationTestCase(unittest.TestCase):
         )
         self.assertEqual(login.status_code, 200)
         self.assertEqual(client.get("/users").status_code, 200)
+
+    def test_legacy_role_check_is_rebuilt_to_allow_ministry_role(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        root = Path(temp_dir.name)
+        database = root / "legacy-check.db"
+
+        with sqlite3.connect(database) as connection:
+            connection.execute(
+                """
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                    password_hash TEXT NOT NULL,
+                    role TEXT NOT NULL DEFAULT 'user'
+                        CHECK (role IN ('admin', 'user')),
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+            connection.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')",
+                ("tester", generate_password_hash("secret123")),
+            )
+
+        app = create_app(
+            {
+                "TESTING": True,
+                "DATABASE": str(database),
+                "UPLOAD_DIR": str(root / "uploads"),
+                "AUTH_USERNAME": "tester",
+                "AUTH_PASSWORD": "secret123",
+                "SEED_DEMO": False,
+            }
+        )
+
+        with sqlite3.connect(database) as connection:
+            table_sql = connection.execute(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'"
+            ).fetchone()[0]
+            connection.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'moh')",
+                ("moh.legacy", generate_password_hash("StrongPass9")),
+            )
+            connection.commit()
+            role = connection.execute(
+                "SELECT role FROM users WHERE username = ?", ("moh.legacy",)
+            ).fetchone()[0]
+
+        self.assertIn("'moh'", table_sql)
+        self.assertEqual(role, "moh")
+
+        client = app.test_client()
+        login = client.post(
+            "/api/login",
+            json={"username": "moh.legacy", "password": "StrongPass9"},
+        )
+        self.assertEqual(login.status_code, 200)
+        self.assertEqual(login.get_json()["redirect"], "/ministry-of-health")
+        self.assertEqual(client.get("/ministry-of-health").status_code, 200)
+        self.assertEqual(client.get("/forms").status_code, 302)
 
 
 if __name__ == "__main__":

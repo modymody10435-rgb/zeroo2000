@@ -70,12 +70,13 @@ GOVERNORATES = [
 ]
 
 FORM_RESULTS = ["سلبي", "إيجابي", "قيد الانتظار", "لم يتم الفحص"]
-CONTACT_OPTIONS = ["1", "2", "3", "نقص مناعة"]
+CONTACT_OPTIONS = ["1", "2", "3", "نقص مناعة", "AFP"]
 CONTACT_LABELS = {
     "1": "مخالط رقم 1",
     "2": "مخالط رقم 2",
     "3": "مخالط رقم 3",
     "نقص مناعة": "نقص مناعة",
+    "AFP": "حالة AFP",
 }
 FINAL_RESULTS = [
     "سلبي",
@@ -226,6 +227,32 @@ def close_db(_error=None):
         db.close()
 
 
+def migrate_user_roles(db):
+    """يعيد بناء جدول المستخدمين ليسمح بدور «وزارة الصحة» في القواعد القديمة."""
+    row = db.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'"
+    ).fetchone()
+    if row is None or "'moh'" in (row["sql"] or ""):
+        return
+
+    db.executescript(
+        """
+        CREATE TABLE users_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user'
+                CHECK (role IN ('admin', 'user', 'moh')),
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO users_new (id, username, password_hash, role, created_at)
+            SELECT id, username, password_hash, role, created_at FROM users;
+        DROP TABLE users;
+        ALTER TABLE users_new RENAME TO users;
+        """
+    )
+
+
 def init_db():
     db = get_db()
     schema = (BASE_DIR / "schema.sql").read_text(encoding="utf-8")
@@ -238,6 +265,7 @@ def init_db():
         db.execute(
             "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'"
         )
+    migrate_user_roles(db)
 
     form_columns = {
         row["name"] for row in db.execute("PRAGMA table_info(lab_forms)").fetchall()
@@ -1209,7 +1237,7 @@ def build_ebi_payload(delivery, forms):
 def send_ebi_payload(payload, settings):
     if not settings["configured"]:
         raise EbiApiError(
-            "خدمة EBI غير مهيأة. اضبط EBI_API_URL وبيانات الاعتماد على الخادم."
+            "خدمة التسليم إلى الدكتورة أميرة غير مهيأة. اضبط EBI_API_URL وبيانات الاعتماد على الخادم."
         )
 
     headers = {
@@ -1243,17 +1271,17 @@ def send_ebi_payload(payload, settings):
         except Exception:
             pass
         raise EbiApiError(
-            f"رفض نظام EBI الطلب (HTTP {error.code})",
+            f"رفضت خدمة التسليم إلى الدكتورة أميرة الطلب (HTTP {error.code})",
             status=error.code,
             body=body,
         ) from error
     except (URLError, TimeoutError, OSError) as error:
         reason = getattr(error, "reason", None) or str(error)
-        raise EbiApiError(f"تعذر الاتصال بنظام EBI: {reason}") from error
+        raise EbiApiError(f"تعذر الاتصال بخدمة التسليم إلى الدكتورة أميرة: {reason}") from error
 
     if status < 200 or status >= 300:
         raise EbiApiError(
-            f"رفض نظام EBI الطلب (HTTP {status})", status=status, body=body
+            f"رفضت خدمة التسليم إلى الدكتورة أميرة الطلب (HTTP {status})", status=status, body=body
         )
     return status, body
 
@@ -1506,6 +1534,44 @@ def admin_required(view):
         return view(*args, **kwargs)
 
     return wrapped
+
+
+MOH_ROLE = "moh"
+MOH_ALLOWED_ENDPOINTS = {
+    "main.ministry_page",
+    "main.ministry_pdf",
+    "main.index",
+    "main.login_page",
+    "main.api_login",
+    "main.logout",
+    "static",
+}
+
+
+def ministry_required(view):
+    """يسمح لمدير النظام ولحساب وزارة الصحة بالوصول إلى بوابة الاستلام."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        user = current_session_user()
+        if user is None or user["role"] not in ("admin", MOH_ROLE):
+            abort(403)
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+@bp.before_request
+def restrict_ministry_access():
+    """يحجب حساب وزارة الصحة عن كل الصفحات والواجهات عدا بوابته."""
+    user = current_session_user()
+    if user is None or user["role"] != MOH_ROLE:
+        return None
+    if request.endpoint in MOH_ALLOWED_ENDPOINTS or request.endpoint is None:
+        return None
+    if request.path.startswith("/api/") or request.method not in ("GET", "HEAD"):
+        abort(403)
+    return redirect(url_for("main.ministry_page"))
 
 
 def lab_form_to_dict(row):
@@ -1799,7 +1865,7 @@ def build_lab_form_filters(args):
     elif category == "contacts":
         clauses.append("contact_number IN ('1', '2', '3')")
     elif category == "normal":
-        clauses.append("contact_number = ''")
+        clauses.append("contact_number IN ('', 'AFP')")
 
     where = ""
     if clauses:
@@ -1807,17 +1873,31 @@ def build_lab_form_filters(args):
     return where, params
 
 
+def home_for(user):
+    if user is not None and user["role"] == MOH_ROLE:
+        return url_for("main.ministry_page")
+    return url_for("main.forms_page")
+
+
+def start_session(username):
+    session.clear()
+    session["user"] = username
+    g.pop("_current_session_user", None)
+    return current_session_user()
+
+
 @bp.get("/")
 def index():
-    if current_session_user():
-        return redirect(url_for("main.forms_page"))
+    user = current_session_user()
+    if user:
+        return redirect(home_for(user))
     return redirect(url_for("main.login_page"))
 
 
 @bp.route("/login", methods=["GET", "POST"])
 def login_page():
     if request.method == "GET" and current_session_user():
-        return redirect(url_for("main.forms_page"))
+        return redirect(home_for(current_session_user()))
 
     next_target = safe_next(request.values.get("next"))
     username = ""
@@ -1831,8 +1911,9 @@ def login_page():
         elif not authenticate(username, password):
             error = "اسم المستخدم أو كلمة المرور غير صحيحة"
         else:
-            session.clear()
-            session["user"] = username
+            user = start_session(username)
+            if user is not None and user["role"] == MOH_ROLE:
+                return redirect(url_for("main.ministry_page"))
             return redirect(next_target)
 
     status = 401 if error else 200
@@ -1850,8 +1931,9 @@ def api_login():
     if not authenticate(username, password):
         return jsonify({"error": "اسم المستخدم أو كلمة المرور غير صحيحة"}), 401
 
-    session.clear()
-    session["user"] = username
+    user = start_session(username)
+    if user is not None and user["role"] == MOH_ROLE:
+        return jsonify({"ok": True, "redirect": url_for("main.ministry_page")})
     return jsonify({"ok": True, "redirect": safe_next(payload.get("next"))})
 
 
@@ -1864,7 +1946,7 @@ def logout():
 USERNAME_PATTERN = re.compile(r"^[\w.\-]{3,50}$", re.UNICODE)
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
-USER_ROLES = {"admin": "مدير", "user": "مستخدم"}
+USER_ROLES = {"admin": "مدير", "user": "مستخدم", "moh": "وزارة الصحة"}
 
 
 def validate_password(password, confirm):
@@ -2060,7 +2142,7 @@ def lab_form_summary(db):
             "SELECT COUNT(*) AS c FROM lab_forms WHERE contact_number IN ('1', '2', '3')"
         ).fetchone()["c"],
         "normal": db.execute(
-            "SELECT COUNT(*) AS c FROM lab_forms WHERE contact_number = ''"
+            "SELECT COUNT(*) AS c FROM lab_forms WHERE contact_number IN ('', 'AFP')"
         ).fetchone()["c"],
     }
 
@@ -2527,7 +2609,7 @@ def review_form_page(form_id):
     )
 
 
-@bp.get("/deliveries")
+@bp.get("/deliveries/ebi")
 @login_required
 @admin_required
 def ebi_deliveries_page():
@@ -2607,7 +2689,7 @@ def ebi_delivery_pdf_regenerate():
     return redirect(url_for("main.ebi_deliveries_page"))
 
 
-@bp.post("/deliveries")
+@bp.post("/deliveries/ebi")
 @login_required
 @admin_required
 def ebi_delivery_submit():
@@ -2644,7 +2726,7 @@ def ebi_delivery_submit():
     settings = ebi_api_settings()
     if not settings["configured"]:
         errors["api"] = (
-            "خدمة EBI غير مهيأة. اضبط EBI_API_URL وEBI_API_TOKEN أو "
+            "خدمة التسليم إلى الدكتورة أميرة غير مهيأة. اضبط EBI_API_URL وEBI_API_TOKEN أو "
             "EBI_API_KEY على الخادم قبل التسليم."
         )
 
@@ -2781,6 +2863,246 @@ def ebi_delivery_detail(delivery_id):
     )
 
 
+HANDOVER_RECIPIENT = "المدير"
+MINISTRY_RECIPIENT = "وزارة الصحة"
+
+
+def new_handover_reference():
+    stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    return f"AMY-{stamp}-{uuid.uuid4().hex[:6].upper()}"
+
+
+def fetch_handover_eligible_forms(db):
+    handed_ids = {
+        row["lab_form_id"]
+        for row in db.execute("SELECT lab_form_id FROM handover_forms").fetchall()
+    }
+    return [
+        form for form in fetch_ebi_eligible_forms(db) if form["id"] not in handed_ids
+    ]
+
+
+def fetch_handover_history(db, limit=20):
+    return db.execute(
+        "SELECT * FROM handovers ORDER BY id DESC LIMIT ?", (limit,)
+    ).fetchall()
+
+
+def fetch_handover(db, handover_id):
+    return db.execute(
+        "SELECT * FROM handovers WHERE id = ?", (handover_id,)
+    ).fetchone()
+
+
+def handover_stats(db, eligible_forms):
+    return {
+        "eligible": len(eligible_forms),
+        "handed": db.execute(
+            "SELECT COUNT(*) AS count FROM handover_forms"
+        ).fetchone()["count"],
+        "handovers": db.execute(
+            "SELECT COUNT(*) AS count FROM handovers"
+        ).fetchone()["count"],
+        **eligible_category_counts(eligible_forms),
+    }
+
+
+@bp.get("/deliveries")
+@login_required
+@admin_required
+def delivery_page():
+    db = get_db()
+    eligible_forms = fetch_handover_eligible_forms(db)
+    done_id = request.args.get("handover", type=int)
+    handover_error = clean_text(request.args.get("handover_error"))
+    return render_template(
+        "handover.html",
+        eligible_forms=eligible_forms,
+        stats=handover_stats(db, eligible_forms),
+        history=fetch_handover_history(db),
+        done_handover=fetch_handover(db, done_id) if done_id else None,
+        handover_error=handover_error,
+        values={"notes": "", "form_ids": []},
+        errors={},
+        recipient=HANDOVER_RECIPIENT,
+        target=MINISTRY_RECIPIENT,
+    )
+
+
+def fetch_ministry_received_forms(db):
+    return db.execute(
+        """
+        SELECT f.id AS form_id,
+               COALESCE(f.lab_number, hf.lab_number) AS lab_number,
+               COALESCE(f.patient_name, hf.patient_name) AS patient_name,
+               f.governorate AS governorate,
+               f.contact_number AS contact_number,
+               r.first_reviewer_name, r.first_reviewed_at,
+               r.second_reviewer_name, r.second_reviewed_at,
+               h.reference AS handover_reference,
+               h.created_at AS handover_created_at,
+               h.created_by AS handover_created_by
+        FROM handover_forms hf
+        JOIN handovers h ON h.id = hf.handover_id
+        LEFT JOIN lab_forms f ON f.id = hf.lab_form_id
+        LEFT JOIN form_reviews r ON r.lab_form_id = hf.lab_form_id
+        ORDER BY h.created_at DESC, h.id DESC, hf.id ASC
+        """
+    ).fetchall()
+
+
+def ministry_stats(db, received_forms, eligible_forms):
+    return {
+        "received": len(received_forms),
+        "handovers": db.execute(
+            "SELECT COUNT(*) AS count FROM handovers"
+        ).fetchone()["count"],
+        "eligible": len(eligible_forms),
+        **eligible_category_counts(received_forms),
+    }
+
+
+@bp.get("/ministry-of-health")
+@login_required
+@ministry_required
+def ministry_page():
+    return render_ministry_page(get_db())
+
+
+def render_ministry_page(db, pdf_error=""):
+    received_forms = fetch_ministry_received_forms(db)
+    eligible_forms = fetch_handover_eligible_forms(db)
+    return render_template(
+        "ministry.html",
+        received_forms=received_forms,
+        stats=ministry_stats(db, received_forms, eligible_forms),
+        history=fetch_handover_history(db),
+        recipient=HANDOVER_RECIPIENT,
+        pdf_error=pdf_error,
+    )
+
+
+def ministry_pdf_logos():
+    right, left = logo_paths()
+
+    def first_image(paths):
+        for path in paths:
+            uri = image_data_uri(path)
+            if uri:
+                return uri
+        return ""
+
+    return first_image(right), first_image(left)
+
+
+def render_ministry_pdf_html(received_forms, history, stats):
+    logo_right, logo_left = ministry_pdf_logos()
+    return render_template(
+        "ministry_pdf.html",
+        received_forms=received_forms,
+        history=history,
+        stats=stats,
+        recipient=HANDOVER_RECIPIENT,
+        generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        logo_right=logo_right,
+        logo_left=logo_left,
+    )
+
+
+@bp.get("/ministry-of-health/pdf")
+@login_required
+@ministry_required
+def ministry_pdf():
+    db = get_db()
+    received_forms = fetch_ministry_received_forms(db)
+    eligible_forms = fetch_handover_eligible_forms(db)
+    stats = ministry_stats(db, received_forms, eligible_forms)
+    history = fetch_handover_history(db)
+    html = render_ministry_pdf_html(received_forms, history, stats)
+
+    folder = Path(tempfile.mkdtemp(prefix="ministry-pdf-"))
+    destination = folder / f"ministry-report-{datetime.now():%Y%m%d-%H%M%S}.pdf"
+    try:
+        render_html_to_pdf(html, destination)
+        payload = destination.read_bytes()
+    except (DeliveryPdfError, OSError) as error:
+        return render_ministry_page(db, pdf_error=str(error)), 500
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
+
+    return send_file(
+        io.BytesIO(payload),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=destination.name,
+    )
+
+
+@bp.get("/handover-from-amira-to-yasser")
+@login_required
+@admin_required
+def handover_page():
+    return redirect(url_for("main.delivery_page"))
+
+
+@bp.post("/deliveries")
+@login_required
+@admin_required
+def handover_submit():
+    db = get_db()
+    user = current_session_user()
+    selected_ids = []
+    for raw_id in request.form.getlist("form_ids"):
+        try:
+            form_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+        if form_id not in selected_ids:
+            selected_ids.append(form_id)
+
+    values = {
+        "notes": clean_text(request.form.get("notes")),
+        "form_ids": selected_ids,
+    }
+    eligible_forms = fetch_handover_eligible_forms(db)
+    eligible_by_id = {form["id"]: form for form in eligible_forms}
+    errors = {}
+    if not selected_ids:
+        errors["form_ids"] = "يرجى تحديد استمارة واحدة على الأقل."
+    elif any(form_id not in eligible_by_id for form_id in selected_ids):
+        errors["form_ids"] = "بعض الاستمارات المحددة لم تعد متاحة للتسليم."
+
+    if errors:
+        reason = "missing" if not selected_ids else "unavailable"
+        return redirect(url_for("main.delivery_page", handover_error=reason))
+
+    cursor = db.execute(
+        """
+        INSERT INTO handovers (reference, recipient_name, form_count, notes, created_by)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            new_handover_reference(),
+            MINISTRY_RECIPIENT,
+            len(selected_ids),
+            values["notes"],
+            user["username"] if user else "",
+        ),
+    )
+    handover_id = cursor.lastrowid
+    for form_id in selected_ids:
+        form = eligible_by_id[form_id]
+        db.execute(
+            """
+            INSERT INTO handover_forms (handover_id, lab_form_id, lab_number, patient_name)
+            VALUES (?, ?, ?, ?)
+            """,
+            (handover_id, form["id"], form["lab_number"], form["patient_name"]),
+        )
+    db.commit()
+    return redirect(url_for("main.delivery_page", handover=handover_id))
+
+
 @bp.errorhandler(404)
 def not_found(_error):
     if request.path.startswith("/api/"):
@@ -2820,7 +3142,8 @@ def create_app(test_config=None):
         EBI_API_TIMEOUT=os.environ.get("EBI_API_TIMEOUT", "20"),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
-        SEED_DEMO=True,
+        SEED_DEMO=os.environ.get("SEED_DEMO", "1").strip().lower()
+        not in ("0", "false", "no", "off"),
     )
     if test_config:
         app.config.update(test_config)
@@ -2877,10 +3200,8 @@ def create_app(test_config=None):
     return app
 
 
-app = create_app()
-
-
 if __name__ == "__main__":
+    app = create_app()
     port = int(os.environ.get("PORT", "5000"))
     app.run(
         host=os.environ.get("HOST", "0.0.0.0"),

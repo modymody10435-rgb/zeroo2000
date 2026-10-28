@@ -86,6 +86,8 @@ class LabFormTestCase(unittest.TestCase):
         self.assertNotIn('<select name="governorate"', new_form_html)
         self.assertNotIn('name="reviewer_name"', new_form_html)
         self.assertNotIn('name="reviewed_at"', new_form_html)
+        self.assertIn('<option value="AFP"', new_form_html)
+        self.assertIn("حالة AFP", new_form_html)
         self.assertEqual(self.client.get("/forms/9999").status_code, 404)
 
     def test_final_results_are_editable_with_suggestions(self):
@@ -102,9 +104,9 @@ class LabFormTestCase(unittest.TestCase):
         self.assertIn('<input class="final-result-input" name="sample2_final" type="text"', page)
         self.assertNotIn('<select name="sample1_final"', page)
         self.assertNotIn('<select name="sample2_final"', page)
-        self.assertIn(f'list="final-results-{form_id}"', page)
-        self.assertIn(f'<datalist id="final-results-{form_id}"', page)
-        self.assertIn(f'<option value="{chosen}"></option>', page)
+        self.assertIn(f'aria-controls="final-results-1-{form_id}"', page)
+        self.assertIn(f'<ul class="combo-list" id="final-results-1-{form_id}"', page)
+        self.assertIn(f'<li role="option" data-value="{chosen}">', page)
         self.assertIn('value="سلبي"', page)
 
         manual_result = "نتيجة يدوية مخصصة"
@@ -127,8 +129,8 @@ class LabFormTestCase(unittest.TestCase):
         derived_result = "فيروس شلل الأطفال المشتق من النوع VDPV2-n"
 
         new_form_html = self.client.get("/forms/new").get_data(as_text=True)
-        self.assertIn(f'<option value="{like_result}"', new_form_html)
-        self.assertIn(f'<option value="{derived_result}"', new_form_html)
+        self.assertIn(f'data-value="{like_result}"', new_form_html)
+        self.assertIn(f'data-value="{derived_result}"', new_form_html)
 
         created = self.create_form(
             lab_number="L20B-NOPV2",
@@ -204,27 +206,42 @@ class LabFormTestCase(unittest.TestCase):
             national_id="44444444444444",
             contact_number="",
         )
+        self.create_form(
+            lab_number="L20B-CAT-5",
+            national_id="55555555555555",
+            contact_number="AFP",
+        )
 
         listing = self.client.get("/api/forms").get_json()
         summary = listing["summary"]
         self.assertEqual(summary["immunodeficiency"], 1)
         self.assertEqual(summary["contacts"], 2)
-        self.assertEqual(summary["normal"], 1)
+        self.assertEqual(summary["normal"], 2)
 
         self.assertEqual(
             self.client.get("/api/forms?category=immunodeficiency").get_json()["total"], 1
         )
         self.assertEqual(self.client.get("/api/forms?category=contacts").get_json()["total"], 2)
-        self.assertEqual(self.client.get("/api/forms?category=normal").get_json()["total"], 1)
-        self.assertEqual(self.client.get("/api/forms").get_json()["total"], 4)
+        self.assertEqual(self.client.get("/api/forms?category=normal").get_json()["total"], 2)
+        self.assertEqual(self.client.get("/api/forms").get_json()["total"], 5)
 
         invalid = self.create_form(
             lab_number="L20B-CAT-BAD",
-            national_id="55555555555555",
+            national_id="66666666666666",
             contact_number="قيمة غير صحيحة",
         )
         self.assertEqual(invalid.status_code, 400)
         self.assertIn("contact_number", invalid.get_json()["fields"])
+
+    def test_afp_case_can_be_saved_without_national_id(self):
+        response = self.create_form(
+            national_id="",
+            contact_number="AFP",
+            lab_number="L20B-AFP-1",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.get_json()["contact_number"], "AFP")
+        self.assertEqual(response.get_json()["national_id"], "")
 
     def test_national_id_accepts_letters_and_numbers(self):
         for index, national_id in enumerate(("1", "123", "12A456", "ABC1234567890")):
@@ -242,7 +259,7 @@ class LabFormTestCase(unittest.TestCase):
         self.assertIn("national_id", invalid.get_json()["fields"])
 
     def test_national_id_is_optional_when_contact_selected(self):
-        for index, contact in enumerate(("1", "2", "3", "نقص مناعة")):
+        for index, contact in enumerate(("1", "2", "3", "نقص مناعة", "AFP")):
             response = self.create_form(
                 national_id="",
                 contact_number=contact,

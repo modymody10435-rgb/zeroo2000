@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0b3b4a">
-    <title>Polio Lab | التسليم إلى EBI</title>
+    <title>Polio Lab | التسليم إلى الدكتورة أميرة</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
 </head>
 <body class="users-page deliveries-page">
-    {% set active_nav = 'deliveries' %}
+    {% set active_nav = 'deliveries-ebi' %}
     {% include "_icons.html" %}
 
     <div class="app-shell">
@@ -27,7 +27,7 @@
                 </button>
                 <div class="page-heading">
                     <span>التسليم الإلكتروني</span>
-                    <h2>تسليم الاستمارات إلى EBI</h2>
+                    <h2>تسليم الاستمارات إلى الدكتورة أميرة</h2>
                 </div>
                 <div class="topbar-actions">
                     <div class="user-chip">
@@ -49,9 +49,9 @@
                 <section class="panel users-panel">
                     <div class="panel-header">
                         <div>
-                            <span class="section-kicker">EBI</span>
+                            <span class="section-kicker">الدكتورة أميرة</span>
                             <h2>تسليم الاستمارات المراجعة</h2>
-                            <p>اختر الاستمارات المكتملة المراجعة الأولى والثانية، وسجّل بيانات المستلم، ثم أرسلها إلى نظام EBI عبر واجهة API.</p>
+                            <p>اختر الاستمارات المكتملة المراجعة الأولى والثانية، وسجّل بيانات المستلم، ثم أرسلها إلى الدكتورة أميرة عبر واجهة API.</p>
                         </div>
                         <div class="panel-actions">
                             <a class="button button-secondary" href="{{ url_for('main.reviews_page') }}">
@@ -66,7 +66,7 @@
                         <div class="form-alert form-alert--success" role="status">
                             <svg class="icon"><use href="#icon-check"></use></svg>
                             <span>
-                                تم تسليم <strong>{{ sent_delivery.form_count }}</strong> استمارة إلى EBI بنجاح.
+                                تم تسليم <strong>{{ sent_delivery.form_count }}</strong> استمارة إلى الدكتورة أميرة بنجاح.
                                 المرجع: <strong dir="ltr">{{ sent_delivery.reference }}</strong>،
                                 وتوقيت العملية: {{ sent_delivery.created_at|datetime_ar }}.
                                 <a class="delivery-inline-link" href="{{ url_for('main.ebi_delivery_detail', delivery_id=sent_delivery.id) }}">عرض التفاصيل</a>
@@ -79,7 +79,7 @@
                             <svg class="icon"><use href="#icon-alert"></use></svg>
                             <span>
                                 فشل تسليم العملية <strong dir="ltr">{{ failed_delivery.reference }}</strong>:
-                                {{ failed_delivery.error_message or 'تعذر إرسال البيانات إلى EBI.' }}
+                                {{ failed_delivery.error_message or 'تعذر إرسال البيانات إلى الدكتورة أميرة.' }}
                                 <a class="delivery-inline-link" href="{{ url_for('main.ebi_delivery_detail', delivery_id=failed_delivery.id) }}">عرض التفاصيل</a>
                             </span>
                         </div>
@@ -109,7 +109,7 @@
                         </article>
                         <article class="delivery-stat">
                             <span class="delivery-stat-icon"><svg class="icon"><use href="#icon-file"></use></svg></span>
-                            <div><strong>{{ stats.normal }}</strong><small>الحالات العادية</small><em class="delivery-stat-note">في الملف الجاهز</em></div>
+                            <div><strong>{{ stats.normal }}</strong><small>AFB</small><em class="delivery-stat-note">في الملف الجاهز</em></div>
                         </article>
                     </div>
 
@@ -271,7 +271,7 @@
                             <legend>الاستمارات المراجعة الجاهزة</legend>
                             {% if eligible_forms %}
                             <div class="delivery-table-hint">
-                                <span>تنتقل الاستمارات إلى هنا تلقائياً بعد اكتمال المراجعتين. اختر ما تريد تسليمه إلى EBI.</span>
+                                <span>تنتقل الاستمارات إلى هنا تلقائياً بعد اكتمال المراجعتين. اختر ما تريد تسليمه إلى الدكتورة أميرة.</span>
                                 <label class="delivery-select-all">
                                     <input id="select-all-deliveries" type="checkbox">
                                     <span>تحديد الكل</span>
@@ -343,7 +343,7 @@
                                 </span>
                                 <button class="button button-primary" type="submit"{% if not eligible_forms %} disabled{% endif %}>
                                     <svg class="icon"><use href="#icon-upload"></use></svg>
-                                    <span>تسليم المحدد إلى EBI</span>
+                                    <span>تسليم المحدد إلى الدكتورة أميرة</span>
                                 </button>
                             </div>
                         </fieldset>
@@ -407,7 +407,7 @@
 
             <footer class="app-footer no-print">
                 <span>Polio Lab — نظام إدارة المعمل المرجعي لتشخيص شلل الأطفال</span>
-                <span>التسليم الإلكتروني EBI</span>
+                <span>التسليم الإلكتروني إلى الدكتورة أميرة</span>
             </footer>
         </div>
     </div>

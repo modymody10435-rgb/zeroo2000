@@ -116,7 +116,7 @@
                                             <span class="users-avatar">{{ user.username[0]|upper }}</span>
                                             <span class="users-identity-copy">
                                                 <span class="users-name" dir="auto">{{ user.username }}</span>
-                                                <span class="users-role{{ ' is-admin' if user.role == 'admin' }}">{{ 'مدير' if user.role == 'admin' else 'مستخدم' }}</span>
+                                                <span class="users-role{{ ' is-admin' if user.role == 'admin' }}{{ ' is-moh' if user.role == 'moh' }}">{{ {'admin': 'مدير', 'moh': 'وزارة الصحة'}.get(user.role, 'مستخدم') }}</span>
                                                 {% if user.is_current %}
                                                 <span class="users-badge">أنت</span>
                                                 {% endif %}

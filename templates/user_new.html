@@ -140,8 +140,9 @@
                                         required
                                         {% if errors.role %}aria-invalid="true" aria-describedby="role-error"{% endif %}
                                     >
-                                        <option value="user" {% if values.role != 'admin' %}selected{% endif %}>مستخدم — وصول للاستمارات فقط</option>
+                                        <option value="user" {% if values.role == 'user' %}selected{% endif %}>مستخدم — وصول للاستمارات فقط</option>
                                         <option value="admin" {% if values.role == 'admin' %}selected{% endif %}>مدير — وصول كامل وإدارة المستخدمين</option>
+                                        <option value="moh" {% if values.role == 'moh' %}selected{% endif %}>وزارة الصحة — وصول لصفحة وزارة الصحة فقط</option>
                                     </select>
                                     <span class="field-error" id="role-error" aria-live="polite">{{ errors.role or '' }}</span>
                                 </div>
@@ -166,6 +167,7 @@
                                 <li><svg class="icon"><use href="#icon-check"></use></svg><span>اسم مستخدم فريد بدون مسافات.</span></li>
                                 <li><svg class="icon"><use href="#icon-check"></use></svg><span>كلمة مرور لا تقل عن 8 أحرف.</span></li>
                                 <li><svg class="icon"><use href="#icon-check"></use></svg><span>دور «مدير» يسمح بإدارة المستخدمين، ودور «مستخدم» للاستمارات فقط.</span></li>
+                                <li><svg class="icon"><use href="#icon-check"></use></svg><span>دور «وزارة الصحة» يعرض صفحة الوزارة فقط ويمنع الوصول لباقي الأقسام.</span></li>
                                 <li><svg class="icon"><use href="#icon-check"></use></svg><span>تُخزَّن كلمة المرور مشفّرة ولا يمكن استعراضها.</span></li>
                             </ul>
                         </aside>

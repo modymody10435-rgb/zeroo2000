@@ -137,7 +137,7 @@
         const categoryNames = {
             immunodeficiency: "نقص مناعة",
             contacts: "المخالطين",
-            normal: "الحالات العادية",
+            normal: "AFP",
         };
         const categoryCounts = {
             immunodeficiency: summary.immunodeficiency || 0,
